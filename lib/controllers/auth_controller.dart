@@ -1,6 +1,8 @@
 import 'dart:async';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:get_storage/get_storage.dart';
 import 'package:iconsax/iconsax.dart';
 import '../common/widgets/dialogs/simple_alert_dialog.dart';
 import '../data/repos/auth_repository.dart';
@@ -9,12 +11,15 @@ import '../data/repos/wallet_repository.dart';
 import '../domain/enums/app_enums.dart';
 import '../domain/models/location_model.dart';
 import '../domain/models/user_model.dart';
+import '../features/authentication/screens/onboarding/account_type_selection.dart';
 import '../features/service/screens/navigation/vipeep_navigation.dart';
 
 class AuthController extends GetxController {
   final AuthRepository _authRepo;
   final UserRepository _userRepo;
   final WalletRepository _walletRepo;
+
+  final _storage = GetStorage();
 
   AuthController({
     required AuthRepository authRepo,
@@ -94,5 +99,41 @@ class AuthController extends GetxController {
     await _authRepo.sendPasswordResetEmail(email: email);
   }
 
-  Future<void> logout() => _authRepo.signOut();
+  /// Logout method
+  Future<void> logout() async {
+    final confirm = await Get.defaultDialog<bool>(
+      title: "Logout",
+      middleText: "Are you sure you want to logout?",
+      textConfirm: "Yes",
+      textCancel: "No",
+      onConfirm: () => Get.back(result: true),
+      onCancel: () => Get.back(result: false),
+    );
+
+    if (confirm != true) return;
+
+    try {
+      isLoading.value = true;
+
+      // Sign out from Firebase
+      await FirebaseAuth.instance.signOut();
+
+      // Clear stored session/onboarding flags if any
+      _storage.remove('user_logged_in');
+      // Optional: reset onboarding if you want
+      // _storage.remove('onboarding_done');
+
+      // Navigate to Account Selection or Login
+      Get.offAll(() => const AccountTypeSelectionScreen());
+    } catch (e) {
+      Get.snackbar(
+        "Logout Failed",
+        e.toString(),
+        backgroundColor: Colors.redAccent,
+        colorText: Colors.white,
+      );
+    } finally {
+      isLoading.value = false;
+    }
+  }
 }

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:get_storage/get_storage.dart';
 import 'package:servicex_client_app/features/authentication/screens/onboarding/widgets/onboarding_arrow_button.dart';
 import 'package:servicex_client_app/features/authentication/screens/onboarding/widgets/onboarding_dots.dart';
 import 'package:servicex_client_app/features/authentication/screens/onboarding/widgets/onboarding_page.dart';
@@ -7,10 +8,11 @@ import 'package:servicex_client_app/features/authentication/screens/onboarding/w
 import 'package:servicex_client_app/utils/constants/images.dart';
 
 import '../../../../controllers/onboarding_controller.dart';
+import 'account_type_selection.dart';
 
 class OnBoardingScreen extends StatelessWidget {
-  const OnBoardingScreen({super.key});
-
+   OnBoardingScreen({super.key});
+  final storage = GetStorage();
   @override
   Widget build(BuildContext context) {
     final controller = Get.put(OnBoardingController());
@@ -55,4 +57,12 @@ class OnBoardingScreen extends StatelessWidget {
       ),
     );
   }
+
+
+
+  void completeOnboarding() {
+    storage.write('onboarding_done', true);
+    Get.offAll(() => const AccountTypeSelectionScreen());
+  }
+
 }

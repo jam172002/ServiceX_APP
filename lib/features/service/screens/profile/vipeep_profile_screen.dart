@@ -16,6 +16,8 @@ import 'package:servicex_client_app/features/service/screens/profile/widgets/pro
 import 'package:servicex_client_app/utils/constants/colors.dart';
 import 'package:servicex_client_app/utils/constants/images.dart';
 
+import '../../../../controllers/auth_controller.dart';
+
 class VipeepProfileScreen extends StatelessWidget {
   const VipeepProfileScreen({super.key});
 
@@ -118,13 +120,16 @@ class VipeepProfileScreen extends StatelessWidget {
                       ),
                     ),
                     IconButton(
-                      onPressed: () {},
+                      onPressed: () {
+                        Get.find<AuthController>().logout();
+                      },
                       icon: const Icon(
                         Iconsax.logout,
                         color: Colors.redAccent,
                         size: 20,
                       ),
                     ),
+
                   ],
                 ),
               ),

@@ -4,8 +4,9 @@ import 'package:servicex_client_app/features/authentication/screens/onboarding/o
 import 'package:servicex_client_app/utils/theme/theme.dart';
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+  final Widget initialScreen;
 
+  const MyApp({super.key, required this.initialScreen});
   @override
   Widget build(BuildContext context) {
     return GetMaterialApp(
