@@ -4,9 +4,10 @@ import 'package:iconsax/iconsax.dart';
 import 'package:servicex_client_app/common/widgets/fields/text_form_field.dart';
 import 'package:servicex_client_app/features/authentication/screens/password_reset/enter_email_screen.dart';
 import 'package:servicex_client_app/features/authentication/screens/signup/vipeeps_signup_screen.dart';
-import 'package:servicex_client_app/features/service/screens/navigation/vipeep_navigation.dart';
 import 'package:servicex_client_app/utils/constants/colors.dart';
 import 'package:servicex_client_app/utils/constants/images.dart';
+
+import '../../../../controllers/auth_controller.dart';
 
 class VipeepLoginScreen extends StatefulWidget {
   const VipeepLoginScreen({super.key});
@@ -32,7 +33,7 @@ class _VipeepLoginScreenState extends State<VipeepLoginScreen> {
   Widget build(BuildContext context) {
     final screenHeight = MediaQuery.of(context).size.height;
     final spacing = screenHeight < 700 ? 6.0 : 12.0;
-
+    final authController = Get.find<AuthController>();
     return Scaffold(
       body: SafeArea(
         child: Column(
@@ -124,11 +125,16 @@ class _VipeepLoginScreenState extends State<VipeepLoginScreen> {
                       SizedBox(
                         width: double.infinity,
                         child: ElevatedButton(
-                          onPressed: () {
-                            if (_formKey.currentState!.validate()) {
-                              Get.to(() => VipeepNavigation());
-                            }
-                          },
+                            onPressed: authController.isLoading.value
+                                ? null
+                                : () {
+                              if (_formKey.currentState!.validate()) {
+                                authController.login(
+                                  email: emailPhoneController.text.trim(),
+                                  password: passwordController.text,
+                                );
+                              }
+                            } ,
                           style: ElevatedButton.styleFrom(
                             backgroundColor: XColors.primary,
                             padding: const EdgeInsets.symmetric(vertical: 14),

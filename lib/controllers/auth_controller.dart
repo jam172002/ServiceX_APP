@@ -1,11 +1,15 @@
 import 'dart:async';
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:iconsax/iconsax.dart';
+import '../common/widgets/dialogs/simple_alert_dialog.dart';
 import '../data/repos/auth_repository.dart';
 import '../data/repos/user_repository.dart';
 import '../data/repos/wallet_repository.dart';
 import '../domain/enums/app_enums.dart';
 import '../domain/models/location_model.dart';
 import '../domain/models/user_model.dart';
+import '../features/service/screens/navigation/vipeep_navigation.dart';
 
 class AuthController extends GetxController {
   final AuthRepository _authRepo;
@@ -64,11 +68,26 @@ class AuthController extends GetxController {
     }
   }
 
-  Future<void> loginWithEmailPassword({
-    required String email,
-    required String password,
-  }) async {
-    await _authRepo.signInWithEmailPassword(email: email, password: password);
+
+
+  Future<void> login({required String email, required String password}) async {
+    try {
+      isLoading.value = true;
+
+      // You can use emailOrPhone as email for now, or add phone login in backend
+      await _authRepo.signInWithEmailPassword(email: email, password: password);
+
+      // Navigate after successful login
+      Get.offAll(() => const VipeepNavigation());
+    } catch (e) {
+      Get.dialog(SimpleDialogWidget(
+        icon: Iconsax.danger,
+        iconColor: Colors.red,
+        message: e.toString(),
+      ));
+    } finally {
+      isLoading.value = false;
+    }
   }
 
   Future<void> sendPasswordReset({required String email}) async {
