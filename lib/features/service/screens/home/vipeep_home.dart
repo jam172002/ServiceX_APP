@@ -5,7 +5,7 @@ import 'package:servicex_client_app/common/widgets/appbar/custom_home_appbar.dar
 import 'package:servicex_client_app/common/widgets/bottom_sheets/location_bottom_sheet.dart';
 import 'package:servicex_client_app/common/widgets/containers/map_view_container.dart';
 import 'package:servicex_client_app/common/widgets/headings/simple_heading.dart';
-import 'package:servicex_client_app/features/authentication/controllers/location/vipeep_location_controller.dart';
+import 'package:servicex_client_app/controllers/vipeep_location_controller.dart';
 import 'package:servicex_client_app/features/service/screens/home/linked_screens/all_catagories_screen.dart';
 import 'package:servicex_client_app/features/service/screens/home/linked_screens/create_service_job_screen.dart';
 import 'package:servicex_client_app/features/service/screens/home/linked_screens/notifications_screen.dart';

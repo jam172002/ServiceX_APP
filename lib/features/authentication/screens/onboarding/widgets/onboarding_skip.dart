@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:servicex_client_app/features/authentication/controllers/onboarding/onboarding_controller.dart';
 import 'package:servicex_client_app/utils/constants/colors.dart';
 import 'package:servicex_client_app/utils/constants/sizes.dart';
 import 'package:servicex_client_app/utils/device/device_utils.dart';
+
+import '../../../../../controllers/onboarding_controller.dart';
 
 class OnBoardingSkip extends StatelessWidget {
   const OnBoardingSkip({super.key});

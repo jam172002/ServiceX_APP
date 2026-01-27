@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:servicex_client_app/features/authentication/controllers/onboarding/onboarding_controller.dart';
 import 'package:servicex_client_app/utils/constants/colors.dart';
 import 'package:servicex_client_app/utils/constants/sizes.dart';
 import 'package:servicex_client_app/utils/device/device_utils.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
+
+import '../../../../../controllers/onboarding_controller.dart';
 
 class OnBoardingDotNavigation extends StatelessWidget {
   const OnBoardingDotNavigation({super.key});

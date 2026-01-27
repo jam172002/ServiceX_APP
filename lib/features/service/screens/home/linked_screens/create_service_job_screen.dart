@@ -4,7 +4,7 @@ import 'package:get/get.dart';
 import 'package:iconsax/iconsax.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:servicex_client_app/common/widgets/appbar/common_appbar.dart';
-import 'package:servicex_client_app/features/authentication/controllers/location/vipeep_location_controller.dart';
+import 'package:servicex_client_app/controllers/vipeep_location_controller.dart';
 import 'package:servicex_client_app/features/service/screens/home/linked_screens/service_provider_profile_screen.dart';
 import 'package:servicex_client_app/features/service/screens/home/widgets/vipeeps/create_job_widgets/all_services_dialog.dart';
 import 'package:servicex_client_app/features/service/screens/home/widgets/vipeeps/create_job_widgets/create_job_budget_section.dart';

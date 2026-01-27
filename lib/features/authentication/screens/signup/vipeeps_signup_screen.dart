@@ -11,6 +11,10 @@ import 'package:servicex_client_app/features/service/screens/navigation/vipeep_n
 import 'package:servicex_client_app/utils/constants/colors.dart';
 import 'package:servicex_client_app/utils/constants/images.dart';
 
+import '../../../../controllers/auth_controller.dart';
+import '../../../../domain/enums/app_enums.dart';
+import '../../../../domain/models/location_model.dart';
+
 class VipeepSignupScreen extends StatefulWidget {
   const VipeepSignupScreen({super.key});
 
@@ -22,13 +26,17 @@ class _VipeepSignupScreenState extends State<VipeepSignupScreen> {
   final _formKey = GlobalKey<FormState>();
 
   // Controllers
+  final authController = Get.find<AuthController>();
+  LocationModel? selectedLocation;
+
+
+
   final nameController = TextEditingController();
   final emailController = TextEditingController();
   final phoneController = TextEditingController();
   final passwordController = TextEditingController();
 
   String? selectedGender;
-  String? selectedLocation;
 
   @override
   void dispose() {
@@ -39,62 +47,54 @@ class _VipeepSignupScreenState extends State<VipeepSignupScreen> {
     super.dispose();
   }
 
-  void _signup() {
-    if (_formKey.currentState!.validate()) {
-      if (selectedGender == null) {
-        Get.dialog(
-          SimpleDialogWidget(
-            icon: Iconsax.danger,
-            iconColor: XColors.warning,
-            message: "Please select your gender",
-          ),
-        );
-        return;
-      }
+  void _signup() async {
+    if (!_formKey.currentState!.validate()) return;
 
-      if (selectedLocation == null) {
-        Get.dialog(
-          SimpleDialogWidget(
-            icon: Iconsax.danger,
-            iconColor: XColors.warning,
-            message: "Please select your location",
-          ),
-        );
-        return;
-      }
+    if (selectedGender == null) {
+      Get.dialog(SimpleDialogWidget(
+        icon: Iconsax.danger,
+        iconColor: XColors.warning,
+        message: "Please select your gender",
+      ));
+      return;
+    }
 
-      // Perform signup logic here (API call or local storage)
-      // Navigate or show success as needed
-      Get.dialog(
-        SimpleDialogWidget(
-          message: "Signup successful!",
-          icon: Iconsax.tick_circle,
-          iconColor: Colors.green,
-          buttonText: "Continue",
-          onOk: () {
-            // Navigate to next screen or close dialog
-            Get.off(
-              () => PermissionScreen(
-                title: 'Stay in the loop!',
-                subtitle:
-                    'Turn on notifications to get updates, offers, and\nbooking reminders, right on time.',
-                allowButtonText: 'Allow',
-                illustration: Image.asset(XImages.allowNotifications),
-                showDenyButton: true,
-                onDeny: () {
-                  //todo: Add functionality to dont allow notifications
-                },
-                onAllow: () {
-                  //todo: Add functionality to allow notifications
-                  Get.off(() => VipeepNavigation());
-                },
-              ),
-            );
-          },
-        ),
+    if (selectedLocation == null) {
+      Get.dialog(SimpleDialogWidget(
+        icon: Iconsax.danger,
+        iconColor: XColors.warning,
+        message: "Please select your location",
+      ));
+      return;
+    }
+
+    // Convert selectedGender string to Gender enum safely
+    final genderValue = Gender.values.firstWhere(
+          (e) => e.name.toLowerCase() == selectedGender!.toLowerCase(),
+      orElse: () => Gender.other,
+    );
+
+    try {
+      await authController.signUpUser(
+        role: AppRole.user,
+        name: nameController.text,
+        email: emailController.text,
+        phone: phoneController.text,
+        gender: genderValue,
+        password: passwordController.text,
+        location: selectedLocation!,
       );
+
+      Get.offAll(() => const VipeepNavigation());
+    } catch (e) {
+      Get.dialog(SimpleDialogWidget(
+        icon: Iconsax.danger,
+        iconColor: XColors.error,
+        message: e.toString(),
+      ));
     }
   }
+
 
   @override
   Widget build(BuildContext context) {
@@ -225,29 +225,31 @@ class _VipeepSignupScreenState extends State<VipeepSignupScreen> {
                         Align(
                           alignment: Alignment.centerRight,
                           child: TextButton.icon(
-                            onPressed: () {
-                              // Pick location logic
-                              setState(() {
-                                selectedLocation = "Selected location";
-                              });
-
-                              Get.to(
-                                () => PermissionScreen(
+                            onPressed: () async {
+                              final allowed = await Get.to<bool>(
+                                    () => PermissionScreen(
                                   title: 'Need Location Access',
-                                  subtitle:
-                                      'Please give us access to your GPS Location',
-                                  illustration: Image.asset(
-                                    XImages.getLocation,
-                                  ),
+                                  subtitle: 'Please give us access to your GPS Location',
+                                  illustration: Image.asset(XImages.getLocation),
                                   allowButtonText: 'Allow',
                                   showDenyButton: true,
-                                  onDeny: () {},
-                                  onAllow: () {
-                                    Get.to(() => LocationSelectorScreen());
-                                  },
+                                  onAllow: () => Get.back(result: true),
+                                  onDeny: () => Get.back(result: false),
                                 ),
                               );
+
+                              if (allowed != true) return;
+
+                              final location = await Get.to<LocationModel>(
+                                    () => const LocationSelectorScreen(),
+                              );
+
+                              if (location != null) {
+                                setState(() => selectedLocation = location);
+                              }
                             },
+
+
                             icon: const Icon(
                               Iconsax.location,
                               size: 16,
@@ -272,6 +274,22 @@ class _VipeepSignupScreenState extends State<VipeepSignupScreen> {
                             ),
                           ),
                         ),
+                        if (selectedLocation != null) ...[
+                          const SizedBox(height: 6),
+                          Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.all(10),
+                            decoration: BoxDecoration(
+                              color: XColors.grey,
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Text(
+                              selectedLocation!.address,
+                              style: const TextStyle(fontSize: 12),
+                            ),
+                          ),
+                        ],
+
                         SizedBox(height: spacing),
 
                         // Signup Button
@@ -286,13 +304,17 @@ class _VipeepSignupScreenState extends State<VipeepSignupScreen> {
                                 borderRadius: BorderRadius.circular(8),
                               ),
                             ),
-                            child: const Text(
-                              "Sign up",
-                              style: TextStyle(
-                                fontSize: 14,
-                                color: Colors.white,
-                              ),
-                            ),
+                            child: Obx(() => ElevatedButton(
+                              onPressed: authController.isLoading.value ? null : _signup,
+                              child: authController.isLoading.value
+                                  ? const SizedBox(
+                                height: 18,
+                                width: 18,
+                                child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                              )
+                                  : const Text("Sign up"),
+                            )),
+
                           ),
                         ),
                         SizedBox(height: 4),

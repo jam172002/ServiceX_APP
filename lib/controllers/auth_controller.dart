@@ -1,10 +1,10 @@
 import 'dart:async';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:get/get.dart';
 import '../data/repos/auth_repository.dart';
 import '../data/repos/user_repository.dart';
 import '../data/repos/wallet_repository.dart';
 import '../domain/enums/app_enums.dart';
+import '../domain/models/location_model.dart';
 import '../domain/models/user_model.dart';
 
 class AuthController extends GetxController {
@@ -20,22 +20,7 @@ class AuthController extends GetxController {
         _userRepo = userRepo,
         _walletRepo = walletRepo;
 
-  final Rxn<User> firebaseUser = Rxn<User>();
-  StreamSubscription<User?>? _sub;
-
-  @override
-  void onInit() {
-    super.onInit();
-    _sub = _authRepo.authStateChanges().listen((u) => firebaseUser.value = u);
-  }
-
-  @override
-  void onClose() {
-    _sub?.cancel();
-    super.onClose();
-  }
-
-  User? get currentFirebaseUser => firebaseUser.value;
+  final RxBool isLoading = false.obs;
 
   Future<UserModel> signUpUser({
     required AppRole role,
@@ -44,34 +29,39 @@ class AuthController extends GetxController {
     required String phone,
     required Gender gender,
     required String password,
+    required LocationModel location,
     String photoUrl = '',
-    bool isVerified = false,
-    Map<String, dynamic>? locationJson,
   }) async {
-    final cred = await _authRepo.signUpWithEmailPassword(email: email, password: password);
-    final uid = cred.user!.uid;
+    try {
+      isLoading.value = true;
 
-    final user = UserModel(
-      id: uid,
-      role: role,
-      name: name,
-      email: email,
-      phone: phone,
-      gender: gender,
-      location: locationJson == null ? null : (locationJson['label'] != null ? null : null),
-      photoUrl: photoUrl,
-      isVerified: isVerified,
-      createdAt: DateTime.now(),
-    );
+      final cred = await _authRepo.signUpWithEmailPassword(
+        email: email,
+        password: password,
+      );
 
-    await _userRepo.createUser(user);
-    await _walletRepo.ensureWalletExists(uid);
+      final uid = cred.user!.uid;
 
-    if (role == AppRole.provider) {
-      // Provider profile is handled in ProviderController via ProviderRepository
+      final user = UserModel(
+        id: uid,
+        role: role,
+        name: name.trim(),
+        email: email.trim(),
+        phone: phone.trim(),
+        gender: gender,
+        location: location,
+        photoUrl: photoUrl,
+        isVerified: false,
+        createdAt: DateTime.now(),
+      );
+
+      await _userRepo.createUser(user);
+      await _walletRepo.ensureWalletExists(uid);
+
+      return user;
+    } finally {
+      isLoading.value = false;
     }
-
-    return user;
   }
 
   Future<void> loginWithEmailPassword({

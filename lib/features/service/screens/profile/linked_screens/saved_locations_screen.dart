@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:iconsax/iconsax.dart';
 import 'package:servicex_client_app/common/widgets/appbar/common_appbar.dart';
-import 'package:servicex_client_app/features/authentication/controllers/location/vipeep_location_controller.dart';
+import 'package:servicex_client_app/controllers/vipeep_location_controller.dart';
 import 'package:servicex_client_app/utils/constants/colors.dart';
 
 class SavedLocationsScreen extends StatefulWidget {

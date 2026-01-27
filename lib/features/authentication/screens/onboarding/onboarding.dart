@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:servicex_client_app/features/authentication/controllers/onboarding/onboarding_controller.dart';
 import 'package:servicex_client_app/features/authentication/screens/onboarding/widgets/onboarding_arrow_button.dart';
 import 'package:servicex_client_app/features/authentication/screens/onboarding/widgets/onboarding_dots.dart';
 import 'package:servicex_client_app/features/authentication/screens/onboarding/widgets/onboarding_page.dart';
 import 'package:servicex_client_app/features/authentication/screens/onboarding/widgets/onboarding_skip.dart';
 import 'package:servicex_client_app/utils/constants/images.dart';
+
+import '../../../../controllers/onboarding_controller.dart';
 
 class OnBoardingScreen extends StatelessWidget {
   const OnBoardingScreen({super.key});

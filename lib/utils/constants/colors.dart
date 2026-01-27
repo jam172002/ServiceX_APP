@@ -18,4 +18,6 @@ class XColors {
   static const Color darkerTint = Color(0xFF1f3685);
   static const Color lightTint = Color(0xFFb8c2ed);
   static const Color lighterTint = Color(0xFFb8c2e9);
+
+  static const Color error = Color(0xFFfc0e0e);
 }
