@@ -17,11 +17,21 @@ import 'package:firebase_core/firebase_core.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  final storage = GetStorage();
+
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
+
   await GetStorage.init();
+  final storage = GetStorage();
+
+  final user = FirebaseAuth.instance.currentUser;
+  final bool userLoggedIn = storage.read('user_logged_in') ?? false;
+  final bool onboardingDone = storage.read('onboarding_done') ?? false;
+
+  print("DEBUG: onboardingDone = $onboardingDone");
+  print("DEBUG: userLoggedIn = $userLoggedIn");
+
 
 
   // Dependency injection AFTER Firebase init
@@ -38,20 +48,16 @@ Future<void> main() async {
 
   Widget initialScreen;
 
-  // Check if onboarding is completed
-  final bool onboardingDone = storage.read('onboarding_done') ?? false;
+// Decide initial screen
 
-  // Check if user is already logged in
-  final userLoggedIn = FirebaseAuth.instance.currentUser != null;
 
   if (!onboardingDone) {
-    initialScreen =  OnBoardingScreen();
+    initialScreen = OnBoardingScreen();
   } else if (userLoggedIn) {
     initialScreen = const VipeepNavigation();
   } else {
     initialScreen = const AccountTypeSelectionScreen();
   }
-
   runApp(MyApp(initialScreen: initialScreen));
 }
 

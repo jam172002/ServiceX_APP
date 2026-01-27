@@ -67,6 +67,9 @@ class AuthController extends GetxController {
       await _userRepo.createUser(user);
       await _walletRepo.ensureWalletExists(uid);
 
+      // Mark user as logged in
+      await _storage.write('user_logged_in', true);
+
       return user;
     } finally {
       isLoading.value = false;
@@ -81,6 +84,8 @@ class AuthController extends GetxController {
 
       // You can use emailOrPhone as email for now, or add phone login in backend
       await _authRepo.signInWithEmailPassword(email: email, password: password);
+    // Mark user as logged in
+      await  _storage.write('user_logged_in', true);
 
       // Navigate after successful login
       Get.offAll(() => const VipeepNavigation());
@@ -119,7 +124,7 @@ class AuthController extends GetxController {
       await FirebaseAuth.instance.signOut();
 
       // Clear stored session/onboarding flags if any
-      _storage.remove('user_logged_in');
+      await  _storage.remove('user_logged_in');
       // Optional: reset onboarding if you want
       // _storage.remove('onboarding_done');
 
