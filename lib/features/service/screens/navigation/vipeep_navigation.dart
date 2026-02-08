@@ -5,7 +5,7 @@ import 'package:iconsax/iconsax.dart';
 import 'package:servicex_client_app/features/service/screens/bookings/vipeep_booking_screen.dart';
 import 'package:servicex_client_app/features/service/screens/home/vipeep_home.dart';
 import 'package:servicex_client_app/features/service/screens/inbox/vipeep_allchat_screen.dart';
-import 'package:servicex_client_app/features/service/screens/profile/vipeep_profile_screen.dart';
+import 'package:servicex_client_app/features/service/screens/profile/vipeep/vipeep_profile_screen.dart';
 import 'package:servicex_client_app/features/service/screens/requests/vipeep_request_screen.dart';
 import 'package:servicex_client_app/utils/constants/colors.dart';
 

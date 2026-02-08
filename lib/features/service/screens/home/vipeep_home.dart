@@ -15,7 +15,7 @@ import 'package:servicex_client_app/features/service/screens/home/linked_screens
 import 'package:servicex_client_app/features/service/screens/home/widgets/vipeeps/category_listview.dart';
 import 'package:servicex_client_app/features/service/screens/home/widgets/vipeeps/populars_hor_listview.dart';
 import 'package:servicex_client_app/features/service/screens/home/widgets/vipeeps/service_providers_hor_view.dart';
-import 'package:servicex_client_app/features/service/screens/profile/linked_screens/settings_screen.dart';
+import 'package:servicex_client_app/features/service/screens/profile/vipeep/settings_screen.dart';
 import 'package:servicex_client_app/utils/constants/colors.dart';
 import 'package:servicex_client_app/utils/constants/images.dart';
 

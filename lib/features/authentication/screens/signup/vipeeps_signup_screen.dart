@@ -231,7 +231,7 @@ class _VipeepSignupScreenState extends State<VipeepSignupScreen> {
                                 selectedLocation = "Selected location";
                               });
 
-                              Get.to(
+                              Get.off(
                                 () => PermissionScreen(
                                   title: 'Need Location Access',
                                   subtitle:

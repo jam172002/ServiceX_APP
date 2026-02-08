@@ -5,8 +5,14 @@ import 'package:servicex_client_app/utils/constants/colors.dart';
 class XAppBar extends StatelessWidget implements PreferredSizeWidget {
   final String title;
   final bool showBackIcon;
+  final List<Widget>? actions;
 
-  const XAppBar({super.key, required this.title, this.showBackIcon = true});
+  const XAppBar({
+    super.key,
+    required this.title,
+    this.showBackIcon = true,
+    this.actions,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -22,7 +28,7 @@ class XAppBar extends StatelessWidget implements PreferredSizeWidget {
               ),
               onPressed: () => Get.back(),
             )
-          : Text(''),
+          : null,
       centerTitle: true,
       title: Text(
         title,
@@ -32,6 +38,7 @@ class XAppBar extends StatelessWidget implements PreferredSizeWidget {
           fontSize: 16,
         ),
       ),
+      actions: actions,
     );
   }
 

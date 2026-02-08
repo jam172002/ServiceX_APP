@@ -19,7 +19,7 @@ class RequestDetailScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     // change this value to test different statuses
     final String status =
-        "accepted"; // e.g. new, under_review, accepted, booked, rebooked, pending, inprogress, completed, cancelled_by_me, cancelled_by_sp
+        "cancelled_by_sp"; // e.g. new, under_review, accepted, booked, rebooked, pending, inprogress, completed, cancelled_by_me, cancelled_by_sp
 
     Widget logicalDivider() => Column(
       children: [

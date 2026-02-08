@@ -70,10 +70,7 @@ class _VipeepRequestScreenState extends State<VipeepRequestScreen> {
                   ? SizedBox(
                       width: double.infinity,
                       child: Align(
-                        alignment: const Alignment(
-                          0,
-                          -0.5,
-                        ), // Slightly above center
+                        alignment: const Alignment(0, -0.5), // Slight
                         child: Image.asset(
                           'assets/images/No-data.png',
                           width: 300,

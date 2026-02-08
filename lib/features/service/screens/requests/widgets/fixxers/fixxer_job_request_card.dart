@@ -10,12 +10,14 @@ class FixxerJobRequestCard extends StatefulWidget {
   final FixxerJobRequestModel job;
   final VoidCallback onTap;
   final VoidCallback? onRemove;
+  final bool isFavourite;
 
   const FixxerJobRequestCard({
     super.key,
     required this.job,
     required this.onTap,
     this.onRemove,
+    this.isFavourite = false,
   });
 
   @override
@@ -23,7 +25,13 @@ class FixxerJobRequestCard extends StatefulWidget {
 }
 
 class _FixxerJobRequestCardState extends State<FixxerJobRequestCard> {
-  bool isFavourite = false;
+  late bool isFavourite;
+
+  @override
+  void initState() {
+    super.initState();
+    isFavourite = widget.isFavourite; // Initialize from widget
+  }
 
   void _toggleFavourite() {
     setState(() => isFavourite = !isFavourite);
@@ -195,27 +203,28 @@ class _FixxerJobRequestCardState extends State<FixxerJobRequestCard> {
             const SizedBox(height: 12),
 
             /// IMAGES
-            SizedBox(
-              height: 56,
-              child: ListView.separated(
-                scrollDirection: Axis.horizontal,
-                itemCount: job.images.length,
-                separatorBuilder: (_, __) => const SizedBox(width: 8),
-                itemBuilder: (_, index) {
-                  return ClipRRect(
-                    borderRadius: BorderRadius.circular(8),
-                    child: Image.asset(
-                      job.images[index],
-                      width: 56,
-                      height: 56,
-                      fit: BoxFit.cover,
-                    ),
-                  );
-                },
+            if (job.images.isNotEmpty)
+              SizedBox(
+                height: 56,
+                child: ListView.separated(
+                  scrollDirection: Axis.horizontal,
+                  itemCount: job.images.length,
+                  separatorBuilder: (_, __) => const SizedBox(width: 8),
+                  itemBuilder: (_, index) {
+                    return ClipRRect(
+                      borderRadius: BorderRadius.circular(8),
+                      child: Image.asset(
+                        job.images[index],
+                        width: 56,
+                        height: 56,
+                        fit: BoxFit.cover,
+                      ),
+                    );
+                  },
+                ),
               ),
-            ),
 
-            const SizedBox(height: 12),
+            if (job.images.isNotEmpty) const SizedBox(height: 12),
 
             /// DATE & LOCATION
             Row(
@@ -233,10 +242,12 @@ class _FixxerJobRequestCardState extends State<FixxerJobRequestCard> {
                 const Spacer(),
                 const Icon(Iconsax.location, size: 12, color: XColors.primary),
                 const SizedBox(width: 4),
-                Text(
-                  job.location,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(fontSize: 11, color: XColors.grey),
+                Expanded(
+                  child: Text(
+                    job.location,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(fontSize: 11, color: XColors.grey),
+                  ),
                 ),
               ],
             ),

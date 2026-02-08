@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:servicex_client_app/common/widgets/appbar/common_appbar.dart';
-import 'package:servicex_client_app/features/service/screens/profile/widgets/payment_card_widget.dart';
-import 'package:servicex_client_app/features/service/screens/profile/widgets/add_new_card_sheet.dart';
+import 'package:servicex_client_app/features/service/screens/profile/widgets/vipeep/payment_card_widget.dart';
+import 'package:servicex_client_app/features/service/screens/profile/widgets/vipeep/add_new_card_sheet.dart';
 
 class PaymentCardsScreen extends StatefulWidget {
   const PaymentCardsScreen({super.key});

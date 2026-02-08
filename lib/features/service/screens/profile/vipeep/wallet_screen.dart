@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:servicex_client_app/common/widgets/appbar/common_appbar.dart';
-import 'package:servicex_client_app/features/service/screens/profile/widgets/transaction_details_dialog.dart';
-import 'package:servicex_client_app/features/service/screens/profile/widgets/transaction_tile.dart';
-import 'package:servicex_client_app/features/service/screens/profile/widgets/wallet_card.dart';
+import 'package:servicex_client_app/features/service/screens/profile/widgets/vipeep/transaction_details_dialog.dart';
+import 'package:servicex_client_app/features/service/screens/profile/widgets/vipeep/transaction_tile.dart';
+import 'package:servicex_client_app/features/service/screens/profile/widgets/vipeep/wallet_card.dart';
 import 'package:servicex_client_app/utils/constants/enums.dart';
 
 class WalletScreen extends StatelessWidget {
