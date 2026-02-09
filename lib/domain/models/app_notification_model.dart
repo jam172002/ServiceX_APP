@@ -45,7 +45,9 @@ class AppNotificationModel {
         NotificationType.serviceUpdate,
       ),
       isRead: (json['isRead'] as bool?) ?? false,
-      createdAt: FirestoreSerializers.dateTimeFrom(json['createdAt']) ?? DateTime.fromMillisecondsSinceEpoch(0),
+      createdAt:
+          FirestoreSerializers.dateTimeFrom(json['createdAt']) ??
+          DateTime.fromMillisecondsSinceEpoch(0),
       data: FirestoreSerializers.toMap(json['data']),
     );
   }

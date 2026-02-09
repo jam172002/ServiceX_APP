@@ -78,10 +78,14 @@ class UserModel {
       gender: enumFromString<Gender>(Gender.values, genderRaw, Gender.other),
       location: json['location'] == null
           ? null
-          : LocationModel.fromJson(FirestoreSerializers.toMap(json['location'])),
+          : LocationModel.fromJson(
+              FirestoreSerializers.toMap(json['location']),
+            ),
       photoUrl: (json['photoUrl'] ?? '').toString(),
       isVerified: (json['isVerified'] as bool?) ?? false,
-      createdAt: FirestoreSerializers.dateTimeFrom(json['createdAt']) ?? DateTime.fromMillisecondsSinceEpoch(0),
+      createdAt:
+          FirestoreSerializers.dateTimeFrom(json['createdAt']) ??
+          DateTime.fromMillisecondsSinceEpoch(0),
     );
   }
 }

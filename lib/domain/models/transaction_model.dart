@@ -45,7 +45,9 @@ class TransactionModel {
         (json['status'] ?? 'pending').toString(),
         TransactionStatus.pending,
       ),
-      createdAt: FirestoreSerializers.dateTimeFrom(json['createdAt']) ?? DateTime.fromMillisecondsSinceEpoch(0),
+      createdAt:
+          FirestoreSerializers.dateTimeFrom(json['createdAt']) ??
+          DateTime.fromMillisecondsSinceEpoch(0),
       reference: (json['reference'] ?? '').toString(),
     );
   }

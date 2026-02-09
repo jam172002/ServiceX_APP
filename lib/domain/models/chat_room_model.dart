@@ -17,7 +17,9 @@ class ChatRoomModel {
     'id': id,
     'userId': userId,
     'providerId': providerId,
-    'lastMessageTime': FirestoreSerializers.timestampFromDateTime(lastMessageTime),
+    'lastMessageTime': FirestoreSerializers.timestampFromDateTime(
+      lastMessageTime,
+    ),
   };
 
   factory ChatRoomModel.fromJson(Map<String, dynamic> json) {
@@ -25,7 +27,9 @@ class ChatRoomModel {
       id: (json['id'] ?? '').toString(),
       userId: (json['userId'] ?? '').toString(),
       providerId: (json['providerId'] ?? '').toString(),
-      lastMessageTime: FirestoreSerializers.dateTimeFrom(json['lastMessageTime']) ?? DateTime.fromMillisecondsSinceEpoch(0),
+      lastMessageTime:
+          FirestoreSerializers.dateTimeFrom(json['lastMessageTime']) ??
+          DateTime.fromMillisecondsSinceEpoch(0),
     );
   }
 }

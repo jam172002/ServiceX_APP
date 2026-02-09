@@ -32,8 +32,12 @@ class MessageModel {
       chatRoomId: (json['chatRoomId'] ?? '').toString(),
       senderId: (json['senderId'] ?? '').toString(),
       text: (json['text'] ?? '').toString(),
-      mediaUrl: json['mediaUrl'] == null ? null : (json['mediaUrl'] ?? '').toString(),
-      sentAt: FirestoreSerializers.dateTimeFrom(json['sentAt']) ?? DateTime.fromMillisecondsSinceEpoch(0),
+      mediaUrl: json['mediaUrl'] == null
+          ? null
+          : (json['mediaUrl'] ?? '').toString(),
+      sentAt:
+          FirestoreSerializers.dateTimeFrom(json['sentAt']) ??
+          DateTime.fromMillisecondsSinceEpoch(0),
     );
   }
 }

@@ -87,13 +87,19 @@ class JobRequestModel {
     return JobRequestModel(
       id: (json['id'] ?? '').toString(),
       userId: (json['userId'] ?? '').toString(),
-      providerId: json['providerId'] == null ? null : (json['providerId'] ?? '').toString(),
+      providerId: json['providerId'] == null
+          ? null
+          : (json['providerId'] ?? '').toString(),
       category: (json['category'] ?? '').toString(),
       subCategory: (json['subCategory'] ?? '').toString(),
       description: (json['description'] ?? '').toString(),
       images: FirestoreSerializers.toStringList(json['images']),
-      location: LocationModel.fromJson(FirestoreSerializers.toMap(json['location'])),
-      scheduledDate: FirestoreSerializers.dateTimeFrom(json['scheduledDate']) ?? DateTime.fromMillisecondsSinceEpoch(0),
+      location: LocationModel.fromJson(
+        FirestoreSerializers.toMap(json['location']),
+      ),
+      scheduledDate:
+          FirestoreSerializers.dateTimeFrom(json['scheduledDate']) ??
+          DateTime.fromMillisecondsSinceEpoch(0),
       budgetMin: FirestoreSerializers.toDouble(json['budgetMin']),
       budgetMax: FirestoreSerializers.toDouble(json['budgetMax']),
       paymentMethod: enumFromString<PaymentMethod>(
@@ -106,7 +112,9 @@ class JobRequestModel {
         (json['status'] ?? 'newRequest').toString(),
         JobStatus.newRequest,
       ),
-      createdAt: FirestoreSerializers.dateTimeFrom(json['createdAt']) ?? DateTime.fromMillisecondsSinceEpoch(0),
+      createdAt:
+          FirestoreSerializers.dateTimeFrom(json['createdAt']) ??
+          DateTime.fromMillisecondsSinceEpoch(0),
     );
   }
 }
