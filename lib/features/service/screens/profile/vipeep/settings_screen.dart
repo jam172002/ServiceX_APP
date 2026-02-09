@@ -3,7 +3,7 @@ import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:get/get_navigation/src/extension_navigation.dart';
 import 'package:get/utils.dart';
 import 'package:servicex_client_app/common/widgets/appbar/common_appbar.dart';
-import 'package:servicex_client_app/features/service/screens/profile/linked_screens/notifications_setting_screen.dart';
+import 'package:servicex_client_app/features/service/screens/profile/vipeep/notifications_setting_screen.dart';
 import 'package:servicex_client_app/utils/constants/colors.dart';
 
 class SettingsScreen extends StatefulWidget {

@@ -1,24 +1,24 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:servicex_client_app/common/widgets/appbar/custom_home_appbar.dart';
-import 'package:servicex_client_app/common/widgets/bottom_sheets/location_bottom_sheet.dart';
 import 'package:servicex_client_app/common/widgets/headings/simple_heading.dart';
 import 'package:servicex_client_app/features/service/models/fixxer_job_request_model.dart';
-import 'package:servicex_client_app/features/service/screens/home/linked_screens/notifications_screen.dart';
-import 'package:servicex_client_app/features/service/screens/home/widgets/fixxers/home_active_plan_card.dart';
+import 'package:servicex_client_app/features/service/screens/home/widgets/fixxers/fixxer_booking_card.dart';
+import 'package:servicex_client_app/features/service/screens/home/widgets/fixxers/fixxer_home_booking_card.dart';
 import 'package:servicex_client_app/features/service/screens/home/widgets/fixxers/home_connects_card.dart';
-import 'package:servicex_client_app/features/service/screens/profile/linked_screens/settings_screen.dart';
-import 'package:servicex_client_app/features/service/screens/requests/fixxer_requests_screen.dart';
+import 'package:servicex_client_app/features/service/screens/profile/fixxer/fixxer_edit_profile_screen.dart';
+import 'package:servicex_client_app/features/service/screens/profile/fixxer/fixxer_notifications_screen.dart';
+import 'package:servicex_client_app/features/service/screens/profile/fixxer/fixxer_plans_screen.dart';
+import 'package:servicex_client_app/features/service/screens/profile/fixxer/fixxer_settings_screen.dart';
 import 'package:servicex_client_app/features/service/screens/requests/widgets/fixxers/fixxer_job_request_card.dart';
 import 'package:servicex_client_app/features/service/screens/home/linked_screens/fixxer_job_detail_screen.dart';
 import 'package:servicex_client_app/utils/constants/enums.dart';
 
 class FixxerHomeScreen extends StatelessWidget {
-  const FixxerHomeScreen({super.key});
+  final Function(int)? onSwitchTab;
+  FixxerHomeScreen({super.key, this.onSwitchTab});
 
-  /// =======================
   /// HOME DUMMY JOBS
-  /// =======================
   List<FixxerJobRequestModel> _homeJobs() {
     return List.generate(3, (index) {
       return FixxerJobRequestModel(
@@ -40,15 +40,27 @@ class FixxerHomeScreen extends StatelessWidget {
     });
   }
 
+  final List<FixxerBookingModel> homeBookings = List.generate(
+    6,
+    (index) => FixxerBookingModel(
+      providerName: 'Provider ${index + 1}',
+      serviceTitle: index.isEven ? 'Wiring' : 'House Cleaning',
+      description:
+          'Professional service for your home with experience and tools.',
+      amount: 100 + index * 20,
+      dateTime: DateTime.now().add(Duration(days: index)),
+      location: 'Model Town, Phase ${index + 1}, Bahawalpur',
+      images: [
+        'assets/images/service-provider.jpg',
+        'assets/images/service-provider2.jpg',
+      ],
+      isFavourite: index % 2 == 0,
+      isCancelled: false,
+    ),
+  );
+
   @override
   Widget build(BuildContext context) {
-    // Dummy booked dates
-    final List<DateTime> bookedDates = [
-      DateTime.now(),
-      DateTime.now().add(const Duration(days: 2)),
-      DateTime.now().add(const Duration(days: 5)),
-    ];
-
     final homeJobs = _homeJobs();
 
     return Scaffold(
@@ -59,39 +71,38 @@ class FixxerHomeScreen extends StatelessWidget {
           location: 'Model Town, Bahawalpur',
           country: "Pakistan",
           imagePath: "assets/images/profile.png",
-          onLocationTap: () => showLocationBottomSheet(context),
-          onSettingTap: () => Get.to(() => SettingsScreen()),
-          onNotificationTap: () => Get.to(() => NotificationsScreen()),
+          onSettingTap: () => Get.to(() => FixxerSettingsScreen()),
+          onProfileTap: () => Get.to(() => FixxerEditProfileScreen()),
+          onNotificationTap: () => Get.to(() => FixxerNotificationsScreen()),
         ),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.symmetric(horizontal: 12),
         child: Column(
           children: [
-            /// =======================
             /// CONNECTS CARD
-            /// =======================
             HomeConnectsCard(
               remainingConnects: 10,
               activePackage: "Starter Plan",
               todaysProjects: 3,
-              bookedDates: bookedDates,
+              bookedDates: [
+                DateTime.now(),
+                DateTime.now().add(const Duration(days: 2)),
+              ],
+              onAddConnectsTap: () => Get.to(() => FixxerPlansScreen()),
             ),
 
             const SizedBox(height: 16),
 
-            /// =======================
             /// NEW JOBS
-            /// =======================
             XHeading(
               title: 'New Jobs',
               actionText: 'View All',
               onActionTap: () {
-                () => FixxerRequestScreen();
+                if (onSwitchTab != null) onSwitchTab!(2);
               },
               sidePadding: 0,
             ),
-
             const SizedBox(height: 10),
 
             ListView.separated(
@@ -103,30 +114,51 @@ class FixxerHomeScreen extends StatelessWidget {
               itemBuilder: (context, index) {
                 return FixxerJobRequestCard(
                   job: homeJobs[index],
-                  onTap: () {
-                    Get.to(() => FixxerJobDetailScreen());
-                  },
+                  onTap: () => Get.to(() => FixxerJobDetailScreen()),
                 );
               },
             ),
-
             const SizedBox(height: 16),
 
-            /// =======================
-            /// ACTIVE PLAN
-            /// =======================
+            /// BOOKINGS
             XHeading(
-              title: 'Active Plan',
-              actionText: 'All Plans',
-              onActionTap: () {},
+              title: 'Bookings',
+              actionText: 'View All',
+              onActionTap: () {
+                if (onSwitchTab != null) onSwitchTab!(1); // Bookings tab
+              },
               sidePadding: 0,
             ),
-
             const SizedBox(height: 10),
 
-            const HomeActivePlanCard(),
+            // Horizontal scrollable bookings
+            SizedBox(
+              height: 274,
+              child: ListView.separated(
+                scrollDirection: Axis.horizontal,
+                itemCount: homeBookings.length,
+                padding: const EdgeInsets.symmetric(horizontal: 4),
+                separatorBuilder: (_, __) => const SizedBox(width: 12),
+                itemBuilder: (context, index) {
+                  final booking = homeBookings[index];
+                  return FixxerHomeBookingCard(
+                    onTap: () {
+                      Get.to(() => FixxerJobDetailScreen());
+                    },
+                    providerName: booking.providerName,
+                    serviceTitle: booking.serviceTitle,
+                    description: booking.description,
+                    amount: booking.amount,
+                    dateTime: booking.dateTime,
+                    location: booking.location,
+                    images: booking.images,
+                    isFavourite: booking.isFavourite,
+                    isCancelled: booking.isCancelled,
+                  );
+                },
+              ),
+            ),
 
-            /// Bottom spacing
             const SizedBox(height: kBottomNavigationBarHeight + 35),
           ],
         ),

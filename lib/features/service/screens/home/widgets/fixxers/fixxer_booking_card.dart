@@ -34,11 +34,12 @@ class FixxerBookingModel {
 /// =======================
 /// BOOKING CARD
 /// =======================
-class FixxerBookingCard extends StatelessWidget {
+class FixxerBookingCard extends StatefulWidget {
   final FixxerBookingModel booking;
   final VoidCallback? onTap;
   final VoidCallback? onRemove;
   final VoidCallback? onFavouriteToggle;
+  final bool alwaysFavourite; // NEW PARAMETER
 
   const FixxerBookingCard({
     super.key,
@@ -46,14 +47,48 @@ class FixxerBookingCard extends StatelessWidget {
     this.onTap,
     this.onRemove,
     this.onFavouriteToggle,
+    this.alwaysFavourite = false,
   });
+
+  @override
+  State<FixxerBookingCard> createState() => _FixxerBookingCardState();
+}
+
+class _FixxerBookingCardState extends State<FixxerBookingCard> {
+  late bool isFavourite;
+
+  @override
+  void initState() {
+    super.initState();
+    isFavourite = widget.booking.isFavourite;
+  }
+
+  void _toggleFavourite() {
+    if (widget.alwaysFavourite) return; // Disable toggle if alwaysFavourite
+
+    setState(() {
+      isFavourite = !isFavourite;
+      widget.booking.isFavourite = isFavourite;
+    });
+
+    widget.onFavouriteToggle?.call();
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          isFavourite ? 'Added to favourites' : 'Removed from favourites',
+        ),
+        duration: const Duration(seconds: 1),
+      ),
+    );
+  }
 
   /// ---------------- Status Logic ----------------
   String getStatus() {
-    if (booking.isCancelled) return 'Cancelled';
+    if (widget.booking.isCancelled) return 'Cancelled';
 
     final now = DateTime.now();
-    final bookingDate = booking.dateTime;
+    final bookingDate = widget.booking.dateTime;
 
     if (bookingDate.isAfter(now)) {
       return 'Upcoming';
@@ -85,9 +120,10 @@ class FixxerBookingCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final status = getStatus();
+    final booking = widget.booking;
 
     return GestureDetector(
-      onTap: onTap,
+      onTap: widget.onTap,
       child: Container(
         width: double.infinity,
         padding: const EdgeInsets.all(16),
@@ -110,7 +146,6 @@ class FixxerBookingCard extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: 12),
-
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -126,7 +161,6 @@ class FixxerBookingCard extends StatelessWidget {
                             overflow: TextOverflow.ellipsis,
                           ),
                           const SizedBox(width: 8),
-
                           Container(
                             padding: const EdgeInsets.symmetric(
                               horizontal: 8,
@@ -165,11 +199,15 @@ class FixxerBookingCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
                     GestureDetector(
-                      onTap: onFavouriteToggle,
+                      onTap: _toggleFavourite,
                       child: Icon(
-                        booking.isFavourite ? Iconsax.heart5 : Iconsax.heart,
+                        isFavourite || widget.alwaysFavourite
+                            ? Iconsax.heart5
+                            : Iconsax.heart,
                         size: 17,
-                        color: booking.isFavourite ? Colors.red : XColors.grey,
+                        color: isFavourite || widget.alwaysFavourite
+                            ? Colors.red
+                            : XColors.grey,
                       ),
                     ),
                     const SizedBox(height: 4),
@@ -185,7 +223,6 @@ class FixxerBookingCard extends StatelessWidget {
                 ),
               ],
             ),
-
             const SizedBox(height: 8),
 
             /// DESCRIPTION
@@ -195,7 +232,6 @@ class FixxerBookingCard extends StatelessWidget {
               overflow: TextOverflow.ellipsis,
               style: const TextStyle(fontSize: 11, color: XColors.grey),
             ),
-
             const SizedBox(height: 12),
 
             /// IMAGES
@@ -219,7 +255,6 @@ class FixxerBookingCard extends StatelessWidget {
                   },
                 ),
               ),
-
             if (booking.images.isNotEmpty) const SizedBox(height: 12),
 
             /// DATE & LOCATION

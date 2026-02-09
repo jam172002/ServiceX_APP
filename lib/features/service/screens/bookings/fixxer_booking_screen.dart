@@ -131,6 +131,7 @@ class _FixxerBookingScreenState extends State<FixxerBookingScreen> {
       body: Column(
         children: [
           const SizedBox(height: 12),
+
           // Month/Year Selector
           GestureDetector(
             onTap: () async {
@@ -287,7 +288,6 @@ class _FixxerBookingScreenState extends State<FixxerBookingScreen> {
               },
             ),
           ),
-
           const SizedBox(height: 16),
 
           // Bookings list
@@ -319,16 +319,16 @@ class _FixxerBookingScreenState extends State<FixxerBookingScreen> {
                             child: FixxerBookingCard(
                               booking: booking,
                               onTap: () {
-                                Get.to(() => FixxerJobDetailScreen());
+                                Get.to(() => const FixxerJobDetailScreen());
                               },
                               onFavouriteToggle: () {
                                 setState(() {
                                   booking.isFavourite = !booking.isFavourite;
                                 });
                               },
+                              alwaysFavourite: false,
                             ),
                           ),
-
                           if (index == bookings.length - 1)
                             const SizedBox(
                               height: kBottomNavigationBarHeight + 20,

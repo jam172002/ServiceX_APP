@@ -5,7 +5,7 @@ import 'package:iconsax/iconsax.dart';
 import 'package:servicex_client_app/features/service/screens/bookings/fixxer_booking_screen.dart';
 import 'package:servicex_client_app/features/service/screens/home/fixxer_home.dart';
 import 'package:servicex_client_app/features/service/screens/inbox/fixxer_allchat_screen.dart';
-import 'package:servicex_client_app/features/service/screens/profile/fixxer_profile_screen.dart';
+import 'package:servicex_client_app/features/service/screens/profile/fixxer/fixxer_profile_screen.dart';
 import 'package:servicex_client_app/features/service/screens/requests/fixxer_requests_screen.dart';
 import 'package:servicex_client_app/utils/constants/colors.dart';
 
@@ -19,13 +19,26 @@ class FixxerNavigation extends StatefulWidget {
 class _FixxerNavigationState extends State<FixxerNavigation> {
   int _selectedIndex = 0;
 
-  final List<Widget> _screens = const [
-    FixxerHomeScreen(),
-    FixxerBookingScreen(),
-    FixxerRequestScreen(),
-    FixxerAllChatScreen(),
-    FixxerProfileScreen(),
-  ];
+  // Screens with callback to switch navbar tab
+  late final List<Widget> _screens;
+
+  @override
+  void initState() {
+    super.initState();
+    _screens = [
+      FixxerHomeScreen(
+        onSwitchTab: (index) {
+          setState(() {
+            _selectedIndex = index;
+          });
+        },
+      ),
+      FixxerBookingScreen(),
+      FixxerRequestScreen(),
+      FixxerAllChatScreen(),
+      FixxerProfileScreen(),
+    ];
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -33,10 +46,10 @@ class _FixxerNavigationState extends State<FixxerNavigation> {
       child: Scaffold(
         body: Stack(
           children: [
-            /// Current screen
+            // Current screen
             _screens[_selectedIndex],
 
-            /// Floating blurred navigation
+            // Floating blurred navigation
             Positioned(
               left: 20,
               right: 20,

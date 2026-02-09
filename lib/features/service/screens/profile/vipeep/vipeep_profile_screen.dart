@@ -5,14 +5,14 @@ import 'package:servicex_client_app/common/widgets/cards/favourite_service_provi
 import 'package:servicex_client_app/common/widgets/headings/simple_heading.dart';
 import 'package:servicex_client_app/features/service/screens/home/linked_screens/create_service_job_screen.dart';
 import 'package:servicex_client_app/features/service/screens/home/linked_screens/service_provider_profile_screen.dart';
-import 'package:servicex_client_app/features/service/screens/profile/linked_screens/all_favourites_screen.dart';
-import 'package:servicex_client_app/features/service/screens/profile/linked_screens/payment_cards_screen.dart';
-import 'package:servicex_client_app/features/service/screens/profile/linked_screens/saved_locations_screen.dart';
-import 'package:servicex_client_app/features/service/screens/profile/linked_screens/settings_screen.dart';
-import 'package:servicex_client_app/features/service/screens/profile/linked_screens/user_profile_edit_screen.dart';
-import 'package:servicex_client_app/features/service/screens/profile/linked_screens/wallet_screen.dart';
-import 'package:servicex_client_app/features/service/screens/profile/widgets/profile_statcard.dart';
-import 'package:servicex_client_app/features/service/screens/profile/widgets/profile_booking_card.dart';
+import 'package:servicex_client_app/features/service/screens/profile/vipeep/all_favourites_screen.dart';
+import 'package:servicex_client_app/features/service/screens/profile/vipeep/payment_cards_screen.dart';
+import 'package:servicex_client_app/features/service/screens/profile/vipeep/saved_locations_screen.dart';
+import 'package:servicex_client_app/features/service/screens/profile/vipeep/settings_screen.dart';
+import 'package:servicex_client_app/features/service/screens/profile/vipeep/user_profile_edit_screen.dart';
+import 'package:servicex_client_app/features/service/screens/profile/vipeep/wallet_screen.dart';
+import 'package:servicex_client_app/features/service/screens/profile/widgets/vipeep/profile_statcard.dart';
+import 'package:servicex_client_app/features/service/screens/profile/widgets/vipeep/profile_booking_card.dart';
 import 'package:servicex_client_app/utils/constants/colors.dart';
 import 'package:servicex_client_app/utils/constants/images.dart';
 
