@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:servicex_client_app/features/service/screens/navigation/vipeep_navigation.dart';
+import 'package:servicex_client_app/presentation/screens/onboarding/onboarding.dart';
 import 'package:servicex_client_app/utils/theme/theme.dart';
 
 class MyApp extends StatelessWidget {
@@ -14,7 +14,7 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: XAppTheme.lightTheme,
       darkTheme: XAppTheme.darkTheme,
-      home: VipeepNavigation(),
+      home: OnBoardingScreen(),
     );
   }
 }

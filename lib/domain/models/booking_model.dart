@@ -57,8 +57,12 @@ class BookingModel {
       jobRequestId: (json['jobRequestId'] ?? '').toString(),
       userId: (json['userId'] ?? '').toString(),
       providerId: (json['providerId'] ?? '').toString(),
-      startTime: FirestoreSerializers.dateTimeFrom(json['startTime']) ?? DateTime.fromMillisecondsSinceEpoch(0),
-      endTime: FirestoreSerializers.dateTimeFrom(json['endTime']) ?? DateTime.fromMillisecondsSinceEpoch(0),
+      startTime:
+          FirestoreSerializers.dateTimeFrom(json['startTime']) ??
+          DateTime.fromMillisecondsSinceEpoch(0),
+      endTime:
+          FirestoreSerializers.dateTimeFrom(json['endTime']) ??
+          DateTime.fromMillisecondsSinceEpoch(0),
       price: FirestoreSerializers.toDouble(json['price']),
       status: enumFromString<BookingStatus>(
         BookingStatus.values,
