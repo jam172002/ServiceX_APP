@@ -299,12 +299,12 @@ class _VipeepSignupScreenState extends State<VipeepSignupScreen> {
                             onPressed: _signup,
                             style: ElevatedButton.styleFrom(
                               backgroundColor: XColors.primary,
-                              padding: const EdgeInsets.symmetric(vertical: 12),
+
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(8),
                               ),
                             ),
-                            child: Obx(() => ElevatedButton(
+                             child: Obx(() => ElevatedButton(
                               onPressed: authController.isLoading.value ? null : _signup,
                               child: authController.isLoading.value
                                   ? const SizedBox(

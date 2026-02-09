@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "416229849888",
+    "project_id": "servicex-220b5",
+    "storage_bucket": "servicex-220b5.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:416229849888:android:bf4915cd0f39bf1bbb3545",
+        "android_client_info": {
+          "package_name": "com.example.servicex_client_app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBd2D66pBj3t8aGxHVlscX15VPh8--jFAE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
