@@ -16,7 +16,8 @@ import 'package:servicex_client_app/features/service/screens/profile/widgets/vip
 import 'package:servicex_client_app/utils/constants/colors.dart';
 import 'package:servicex_client_app/utils/constants/images.dart';
 
-import '../../../../controllers/auth_controller.dart';
+import '../../../../../controllers/auth_controller.dart';
+
 
 class VipeepProfileScreen extends StatelessWidget {
   const VipeepProfileScreen({super.key});
