@@ -1,6 +1,6 @@
 import 'dart:async';
 import 'package:get/get.dart';
-import '../../domain/data/repos/category_repository.dart';
+import '../../domain/repos/category_repository.dart';
 import '../../domain/models/service_category_model.dart';
 
 class CategoryController extends GetxController {

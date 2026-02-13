@@ -4,12 +4,12 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:iconsax/iconsax.dart';
-import '../../domain/data/repos/auth_repository.dart';
-import '../../domain/data/repos/user_repository.dart';
-import '../../domain/data/repos/wallet_repository.dart';
+import '../../domain/repos/user_repository.dart';
+import '../../domain/repos/wallet_repository.dart';
 import '../../domain/enums/app_enums.dart';
 import '../../domain/models/location_model.dart';
 import '../../domain/models/user_model.dart';
+import '../../domain/repos/auth_repository.dart';
 import '../screens/navigation/vipeep_navigation.dart';
 import '../widgets/simple_alert_dialog.dart';
 

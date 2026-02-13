@@ -1,6 +1,6 @@
 import 'dart:async';
 import 'package:get/get.dart';
-import '../../domain/data/repos/chat_repository.dart';
+import '../../domain/repos/chat_repository.dart';
 import '../../domain/models/chat_room_model.dart';
 import '../../domain/models/message_model.dart';
 

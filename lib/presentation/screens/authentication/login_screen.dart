@@ -4,7 +4,6 @@ import 'package:iconsax/iconsax.dart';
 import 'package:servicex_client_app/presentation/screens/authentication/vipeeps_signup_screen.dart';
 import 'package:servicex_client_app/utils/constants/colors.dart';
 import 'package:servicex_client_app/utils/constants/images.dart';
-
 import '../../controllers/auth_controller.dart';
 import '../../widgets/text_form_field.dart';
 import 'enter_email_screen.dart';

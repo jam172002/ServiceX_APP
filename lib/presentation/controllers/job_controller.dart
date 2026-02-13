@@ -1,6 +1,6 @@
 import 'dart:async';
 import 'package:get/get.dart';
-import '../../domain/data/repos/job_repository.dart';
+import '../../domain/repos/job_repository.dart';
 import '../../domain/enums/app_enums.dart';
 import '../../domain/models/job_request_model.dart';
 

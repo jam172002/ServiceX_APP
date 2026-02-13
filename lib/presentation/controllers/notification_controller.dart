@@ -1,6 +1,6 @@
 import 'dart:async';
 import 'package:get/get.dart';
-import '../../domain/data/repos/notification_repository.dart';
+import '../../domain/repos/notification_repository.dart';
 import '../../domain/models/app_notification_model.dart';
 
 class NotificationController extends GetxController {

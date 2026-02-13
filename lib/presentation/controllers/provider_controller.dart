@@ -1,6 +1,6 @@
 import 'dart:async';
 import 'package:get/get.dart';
-import '../../domain/data/repos/provider_repository.dart';
+import '../../domain/repos/provider_repository.dart';
 import '../../domain/models/provider_profile_model.dart';
 
 class ProviderController extends GetxController {
