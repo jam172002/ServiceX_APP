@@ -1,10 +1,21 @@
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
-import 'package:servicex_client_app/app.dart';
-import 'package:servicex_client_app/presentation/controllers/vipeep_location_controller.dart';
-import 'package:servicex_client_app/presentation/screens/onboarding/onboarding.dart';
+import 'package:get_storage/get_storage.dart';
+import 'package:firebase_core/firebase_core.dart';
 
-void main() {
-  Get.put(LocationController());
-  runApp(const MyApp(initialScreen: OnBoardingScreen(),));
+import 'package:servicex_client_app/app.dart';
+import 'package:servicex_client_app/app_bindings.dart';
+import 'package:servicex_client_app/presentation/screens/splash/splash_router.dart';
+
+import 'firebase_options.dart';
+
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  await GetStorage.init();
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+  AppBindings().dependencies();
+
+  runApp(const MyApp(initialScreen: SplashRouter()));
 }

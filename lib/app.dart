@@ -14,7 +14,7 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: XAppTheme.lightTheme,
       darkTheme: XAppTheme.darkTheme,
-      home: OnBoardingScreen(),
+      home: initialScreen,
     );
   }
 }

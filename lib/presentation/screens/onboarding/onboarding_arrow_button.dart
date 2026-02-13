@@ -14,7 +14,7 @@ class OnBoardingArrowButton extends StatelessWidget {
       right: XSizes.defaultSpace,
       bottom: XDeviceUtils.getBottomNavigationBarHeight() - 25,
       child: ElevatedButton(
-        onPressed: () => OnBoardingController.instance.nextPage(),
+        onPressed: () async => await OnBoardingController.instance.nextPage(),
         style: ElevatedButton.styleFrom(
           shape: const CircleBorder(),
           backgroundColor: XColors.primary,

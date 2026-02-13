@@ -12,7 +12,11 @@ class OnBoardingScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final controller = Get.put(OnBoardingController());
+    // Safer: create only if not already created
+    final OnBoardingController controller = Get.isRegistered<OnBoardingController>()
+        ? Get.find<OnBoardingController>()
+        : Get.put(OnBoardingController());
+
     return Scaffold(
       body: Stack(
         children: [
@@ -20,24 +24,24 @@ class OnBoardingScreen extends StatelessWidget {
           PageView(
             controller: controller.pageController,
             onPageChanged: controller.updatePageIndicator,
-            children: [
+            children: const [
               OnBoardingPage(
                 image: XImages.boarding01,
                 title: 'Find Trusted Professionals',
                 subtitle:
-                    'Get instant access to verified service providers for all your home and personal needs.',
+                'Get instant access to verified service providers for all your home and personal needs.',
               ),
               OnBoardingPage(
                 image: XImages.boarding02,
                 title: 'Fast & Easy Booking',
                 subtitle:
-                    'Choose a service, pick a time, and book in just a few taps — simple and hassle-free.',
+                'Choose a service, pick a time, and book in just a few taps — simple and hassle-free.',
               ),
               OnBoardingPage(
                 image: XImages.boarding03,
                 title: 'Secure Payments & Reliable Service',
                 subtitle:
-                    'Pay safely within the app and enjoy high-quality service delivered by trained professionals.',
+                'Pay safely within the app and enjoy high-quality service delivered by trained professionals.',
               ),
             ],
           ),

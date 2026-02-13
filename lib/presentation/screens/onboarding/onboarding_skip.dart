@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:servicex_client_app/presentation/controllers/onboarding_controller.dart';
 import 'package:servicex_client_app/utils/constants/colors.dart';
 import 'package:servicex_client_app/utils/constants/sizes.dart';
@@ -13,7 +14,10 @@ class OnBoardingSkip extends StatelessWidget {
       top: XDeviceUtils.getAppBarHeight(),
       right: XSizes.defaultSpace,
       child: TextButton(
-        onPressed: () => OnBoardingController.instance.skipPage(),
+        onPressed: () async {
+          HapticFeedback.selectionClick(); // optional, feels premium
+          await OnBoardingController.instance.skipPage();
+        },
         style: TextButton.styleFrom(
           splashFactory: NoSplash.splashFactory,
           overlayColor: Colors.transparent,

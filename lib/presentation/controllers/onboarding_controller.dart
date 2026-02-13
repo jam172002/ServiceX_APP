@@ -2,16 +2,21 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 
+import '../screens/authentication/login_screen.dart';
+
 class OnBoardingController extends GetxController {
   static OnBoardingController get instance => Get.find();
 
   final storage = GetStorage();
 
+  // Keys (keep consistent across app)
+  static const String kOnboardingDone = 'onboarding_done';
+
   // Page Controller
   final pageController = PageController();
 
   // Current page index
-  Rx<int> currentPageIndex = 0.obs;
+  final RxInt currentPageIndex = 0.obs;
 
   // Total number of onboarding pages
   final int totalPages = 3;
@@ -22,9 +27,13 @@ class OnBoardingController extends GetxController {
   }
 
   // Jump to selected dot page
-  void dotNavigationClick(int index) {
+  Future<void> dotNavigationClick(int index) async {
     currentPageIndex.value = index;
-    pageController.jumpToPage(index);
+    await pageController.animateToPage(
+      index,
+      duration: const Duration(milliseconds: 250),
+      curve: Curves.easeInOut,
+    );
   }
 
   // Computed property to check if last page
@@ -33,16 +42,32 @@ class OnBoardingController extends GetxController {
   // Go to next page
   Future<void> nextPage() async {
     if (isLastPage) {
-      // Mark onboarding done
-     await storage.write('onboarding_done', true);
-    } else {
-      int page = currentPageIndex.value + 1;
-      pageController.jumpToPage(page);
+      await _completeOnboarding();
+      return;
     }
+
+    final next = currentPageIndex.value + 1;
+    await pageController.animateToPage(
+      next,
+      duration: const Duration(milliseconds: 250),
+      curve: Curves.easeInOut,
+    );
   }
 
-  // Skip to the last page
+  // Skip onboarding (mark done + go login)
   Future<void> skipPage() async {
-    await storage.write('onboarding_done', true);
+    await _completeOnboarding();
+  }
+
+  Future<void> _completeOnboarding() async {
+    await storage.write(kOnboardingDone, true);
+    // After onboarding done -> go to login
+    Get.offAll(() => const VipeepLoginScreen());
+  }
+
+  @override
+  void onClose() {
+    pageController.dispose();
+    super.onClose();
   }
 }

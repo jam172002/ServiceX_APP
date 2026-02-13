@@ -122,19 +122,19 @@ class _VipeepLoginScreenState extends State<VipeepLoginScreen> {
                       SizedBox(height: spacing + 10),
 
                       // Login Button
-                      SizedBox(
+                      Obx(() => SizedBox(
                         width: double.infinity,
                         child: ElevatedButton(
-                            onPressed: authController.isLoading.value
-                                ? null
-                                : () {
-                              if (_formKey.currentState!.validate()) {
-                                authController.login(
-                                  email: emailPhoneController.text.trim(),
-                                  password: passwordController.text,
-                                );
-                              }
-                            } ,
+                          onPressed: authController.isLoading.value
+                              ? null
+                              : () async {
+                            if (_formKey.currentState!.validate()) {
+                              await authController.login(
+                                email: emailPhoneController.text.trim(),
+                                password: passwordController.text,
+                              );
+                            }
+                          },
                           style: ElevatedButton.styleFrom(
                             backgroundColor: XColors.primary,
                             padding: const EdgeInsets.symmetric(vertical: 14),
@@ -142,12 +142,18 @@ class _VipeepLoginScreenState extends State<VipeepLoginScreen> {
                               borderRadius: BorderRadius.circular(12),
                             ),
                           ),
-                          child: const Text(
+                          child: authController.isLoading.value
+                              ? const SizedBox(
+                            height: 18,
+                            width: 18,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                              : const Text(
                             "Log In",
                             style: TextStyle(fontSize: 14, color: Colors.white),
                           ),
                         ),
-                      ),
+                      )),
                       SizedBox(height: spacing),
 
                       // Forget Password
