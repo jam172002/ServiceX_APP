@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:iconsax/iconsax.dart';
+
 import 'package:servicex_client_app/presentation/widgets/custom_home_appbar.dart';
 import 'package:servicex_client_app/presentation/widgets/location_bottom_sheet.dart';
 import 'package:servicex_client_app/presentation/widgets/map_view_container.dart';
 import 'package:servicex_client_app/presentation/widgets/simple_heading.dart';
-import 'package:servicex_client_app/presentation/controllers/vipeep_location_controller.dart';
+import 'package:servicex_client_app/presentation/controllers/location_controller.dart';
 import 'package:servicex_client_app/presentation/screens/home/all_catagories_screen.dart';
 import 'package:servicex_client_app/presentation/screens/home/create_service_job_screen.dart';
 import 'package:servicex_client_app/presentation/screens/home/notifications_screen.dart';
@@ -19,6 +20,10 @@ import 'package:servicex_client_app/presentation/screens/profile/settings_screen
 import 'package:servicex_client_app/utils/constants/colors.dart';
 import 'package:servicex_client_app/utils/constants/images.dart';
 
+import '../../../domain/models/location_model.dart';
+import '../../controllers/auth_controller.dart';
+import '../location/location_selector_screen.dart';
+
 class VipeepHomeScreen extends StatefulWidget {
   const VipeepHomeScreen({super.key});
 
@@ -27,7 +32,8 @@ class VipeepHomeScreen extends StatefulWidget {
 }
 
 class _VipeepHomeScreenState extends State<VipeepHomeScreen> {
-  final LocationController locationController = Get.find();
+  final LocationController locationController = Get.find<LocationController>();
+  final AuthController authController = Get.find<AuthController>();
 
   late final Map<String, dynamic> provider;
   late final List<Map<String, dynamic>> providers;
@@ -40,13 +46,30 @@ class _VipeepHomeScreenState extends State<VipeepHomeScreen> {
   void initState() {
     super.initState();
 
+    // Ensure profile + location are synced once screen is ready
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      // Ensure user is loaded
+      if (authController.currentUser.value == null) {
+        await authController.loadCurrentUser();
+      }
+
+      final u = authController.currentUser.value;
+      if (u != null) {
+        final profileLoc = u.location; // LocationModel (non-null ideally)
+        if (locationController.currentLocation.value == null &&
+            profileLoc!.address.trim().isNotEmpty) {
+          await locationController.addLocation(profileLoc);
+        }
+      }
+    });
+
     provider = {
       "name": "M Sufyan",
       "location": "Bahawalpur, Pakistan",
       "rating": 4.7,
       "image": XImages.serviceProvider,
       "onTap": () => Get.to(() => ServiceProviderProfileScreen()),
-      "onInvite": () => print("Invite Tap: M Sufyan"),
+      "onInvite": () => debugPrint("Invite Tap: M Sufyan"),
     };
 
     providers = List.generate(8, (_) => provider);
@@ -73,27 +96,65 @@ class _VipeepHomeScreenState extends State<VipeepHomeScreen> {
     super.dispose();
   }
 
+  Future<void> _handleLocationTap(BuildContext context) async {
+    final result = await showLocationBottomSheet(context);
+    if (result == null) return;
+
+    // 1) pick location on map
+    if (result is String && result == "pick_on_map") {
+      final picked =
+      await Get.to<LocationModel>(() => const LocationSelectorScreen());
+
+      if (picked != null && picked.address.trim().isNotEmpty) {
+        await locationController.addLocation(picked);
+      }
+      return;
+    }
+
+    // 2) bottom sheet returns LocationModel (recommended)
+    if (result is LocationModel) {
+      await locationController.setDefaultLocation(result);
+      return;
+    }
+
+    // 3) backward compatibility if bottom sheet still returns String address
+    if (result is String && result.trim().isNotEmpty) {
+      final loc = LocationModel(
+        label: "Home",
+        address: result.trim(),
+        lat: 0,
+        lng: 0,
+        isDefault: true,
+      );
+      await locationController.setDefaultLocation(loc);
+      return;
+    }
+
+    Get.snackbar("Location", "Invalid selection");
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: PreferredSize(
         preferredSize: const Size.fromHeight(95),
-        child: Obx(
-          () => CustomHomeAppBar(
-            name: "Muhammad Sufyan",
-            location: locationController.currentLocation.value,
+        child: Obx(() {
+          final u = authController.currentUser.value;
+
+          return CustomHomeAppBar(
+            name: u?.name ?? "Hi",
+            location:
+            locationController.currentLocation.value?.address ??
+                "Select location",
             country: "Pakistan",
-            imagePath: "assets/images/profile.png",
-            onLocationTap: () async {
-              final pickedLocation = await showLocationBottomSheet(context);
-              if (pickedLocation != null) {
-                locationController.updateLocation(pickedLocation);
-              }
-            },
+            imagePath: (u?.photoUrl != null && u!.photoUrl.trim().isNotEmpty)
+                ? u.photoUrl
+                : "assets/images/profile.png",
+            onLocationTap: () => _handleLocationTap(context),
             onSettingTap: () => Get.to(() => SettingsScreen()),
             onNotificationTap: () => Get.to(() => NotificationsScreen()),
-          ),
-        ),
+          );
+        }),
       ),
       body: Stack(
         children: [
@@ -136,7 +197,7 @@ class _VipeepHomeScreenState extends State<VipeepHomeScreen> {
                                 style: TextStyle(
                                   color: XColors.grey,
                                   fontSize:
-                                      MediaQuery.of(context).size.width * 0.03,
+                                  MediaQuery.of(context).size.width * 0.03,
                                   fontWeight: FontWeight.w300,
                                 ),
                                 overflow: TextOverflow.ellipsis,
@@ -199,7 +260,7 @@ class _VipeepHomeScreenState extends State<VipeepHomeScreen> {
                     actionText: 'See all',
                     sidePadding: 16,
                     onActionTap: () => Get.to(
-                      () => const CatagoryServiceProviderScreen(
+                          () => const CatagoryServiceProviderScreen(
                         screenTitle: 'Near You',
                       ),
                     ),
@@ -235,7 +296,7 @@ class _VipeepHomeScreenState extends State<VipeepHomeScreen> {
                   elevation: 0,
                   onPressed: () {
                     Get.to(
-                      () => CreateServiceJobScreen(
+                          () => CreateServiceJobScreen(
                         showServiceProviderCard: false,
                       ),
                     );

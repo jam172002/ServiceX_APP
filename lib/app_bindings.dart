@@ -3,7 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 import 'package:servicex_client_app/presentation/controllers/auth_controller.dart';
-import 'package:servicex_client_app/presentation/controllers/vipeep_location_controller.dart';
+import 'package:servicex_client_app/presentation/controllers/location_controller.dart';
 
 import 'package:servicex_client_app/domain/repos/auth_repository.dart';
 import 'package:servicex_client_app/domain/repos/user_repository.dart';

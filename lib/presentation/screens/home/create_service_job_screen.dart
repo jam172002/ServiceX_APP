@@ -7,7 +7,8 @@ import 'package:servicex_client_app/presentation/screens/home/service_provider_p
 import 'package:servicex_client_app/utils/constants/colors.dart';
 import 'package:servicex_client_app/utils/constants/images.dart';
 
-import '../../controllers/vipeep_location_controller.dart';
+import '../../../domain/models/location_model.dart';
+import '../../controllers/location_controller.dart';
 import '../../widgets/all_services_dialog.dart';
 import '../../widgets/common_appbar.dart';
 import '../../widgets/create_job_budget_section.dart';
@@ -18,6 +19,7 @@ import '../../widgets/create_job_location_section.dart';
 import '../../widgets/create_job_payment_section.dart';
 import '../../widgets/create_job_service_type_section.dart';
 import '../../widgets/location_bottom_sheet.dart';
+import '../location/location_selector_screen.dart';
 
 class CreateServiceJobScreen extends StatefulWidget {
   final bool showServiceProviderCard;
@@ -220,10 +222,38 @@ class _CreateServiceJobScreenState extends State<CreateServiceJobScreen> {
   // LOCATION
   // -------------------------
   Future<void> _editLocation() async {
-    final pickedLocation = await showLocationBottomSheet(context);
-    if (pickedLocation != null) {
-      locationController.updateLocation(pickedLocation);
+    final result = await showLocationBottomSheet(context);
+    if (result == null) return;
+
+    // pick on map
+    if (result is String && result == "pick_on_map") {
+      final picked = await Get.to<LocationModel>(() => const LocationSelectorScreen());
+      if (picked != null && picked.address.trim().isNotEmpty) {
+        await locationController.addLocation(picked);
+      }
+      return;
     }
+
+    // bottom sheet returns LocationModel
+    if (result is LocationModel) {
+      await locationController.setDefaultLocation(result);
+      return;
+    }
+
+    // backward: bottom sheet returns String address
+    if (result is String && result.trim().isNotEmpty) {
+      final loc = LocationModel(
+        label: "Home",
+        address: result.trim(),
+        lat: 0,
+        lng: 0,
+        isDefault: true,
+      );
+      await locationController.setDefaultLocation(loc);
+      return;
+    }
+
+    Get.snackbar("Location", "Invalid selection");
   }
 
   // -------------------------
@@ -323,7 +353,7 @@ class _CreateServiceJobScreenState extends State<CreateServiceJobScreen> {
       "service": _allServices[_selectedServiceIndex!]["title"],
       "sub_type": _selectedSubType,
       "details": _detailsController.text.trim(),
-      "location": locationController.currentLocation.value,
+      "location": locationController.currentLocation.value?.address ?? "Select location",
       "date": _selectedDate!.toIso8601String(),
       "time": _selectedTime!.format(context),
       "budget_min": _budgetRange.start.round(),
@@ -540,7 +570,7 @@ class _CreateServiceJobScreenState extends State<CreateServiceJobScreen> {
             const SizedBox(height: 20),
             Obx(
               () => LocationSection(
-                location: locationController.currentLocation.value,
+                location: locationController.currentLocation.value?.address ?? "Select location",
                 onEdit: _editLocation,
               ),
             ),

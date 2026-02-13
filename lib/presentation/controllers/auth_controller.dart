@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:iconsax/iconsax.dart';
+import 'package:servicex_client_app/presentation/controllers/location_controller.dart';
 
 import '../../domain/enums/app_enums.dart';
 import '../../domain/models/location_model.dart';
@@ -20,6 +21,7 @@ class AuthController extends GetxController {
   final WalletRepository _walletRepo;
 
   final _storage = GetStorage();
+  final Rxn<UserModel> currentUser = Rxn<UserModel>();
 
   AuthController({
     required AuthRepository authRepo,
@@ -38,20 +40,24 @@ class AuthController extends GetxController {
   /// Call this from Splash / initial screen:
   /// If user is already logged in, go to home.
   Future<void> handleStartupRouting() async {
-    // Trust Firebase first; storage is only a helper.
     final firebaseUser = FirebaseAuth.instance.currentUser;
 
     final bool storedLoggedIn = _storage.read(_kLoggedIn) == true;
     final String? storedUid = _storage.read(_kUid);
 
     if (firebaseUser != null) {
-      // session exists
       await _persistSession(firebaseUser.uid);
+      await loadCurrentUser();
+
+      final u = currentUser.value;
+      if (u != null) {
+        await _syncLocationFromProfile(u);
+      }
+
       Get.offAll(() => const VipeepNavigation());
       return;
     }
 
-    // If storage says logged in but Firebase says no => clean it (prevents stuck states)
     if (storedLoggedIn || storedUid != null) {
       await _clearSession();
     }
@@ -98,13 +104,15 @@ class AuthController extends GetxController {
         createdAt: DateTime.now(),
       );
 
-      // Create profile + wallet (if any fails, handle cleanly)
       await _userRepo.createUser(user);
       await _walletRepo.ensureWalletExists(uid);
 
-      // Persist session (so app can go to home next time)
-      await _persistSession(uid);
+      currentUser.value = user;
 
+      // ✅ Sync profile location into local LocationController storage
+      await _syncLocationFromProfile(user);
+
+      await _persistSession(uid);
       return user;
     } on FirebaseAuthException catch (e) {
       _showErrorDialog(_mapFirebaseAuthError(e));
@@ -115,6 +123,24 @@ class AuthController extends GetxController {
     } finally {
       isLoading.value = false;
     }
+  }
+
+  /// ✅ PRODUCTION FIX:
+  /// LocationController.addLocation expects LocationModel, not String.
+  /// So we pass user's full LocationModel.
+  Future<void> _syncLocationFromProfile(UserModel user) async {
+    final profileLoc = user.location; // LocationModel (or nullable depending on your model)
+    if (profileLoc == null) return;
+
+    if (profileLoc.address.trim().isEmpty) return;
+
+    // If controller isn't registered, don't crash (production safe)
+    if (!Get.isRegistered<LocationController>()) return;
+
+    final locationController = Get.find<LocationController>();
+
+    // Add into slots + set default (your controller already does this)
+    await locationController.addLocation(profileLoc.copyWith(isDefault: true));
   }
 
   Future<void> login({required String email, required String password}) async {
@@ -129,9 +155,14 @@ class AuthController extends GetxController {
       final uid = FirebaseAuth.instance.currentUser?.uid;
       if (uid != null) {
         await _persistSession(uid);
+        await loadCurrentUser();
+
+        final u = currentUser.value;
+        if (u != null) {
+          await _syncLocationFromProfile(u);
+        }
       } else {
-        // extremely rare edge case
-        await _persistSession(''); // or just skip
+        await _persistSession('');
       }
 
       Get.offAll(() => const VipeepNavigation());
@@ -159,7 +190,6 @@ class AuthController extends GetxController {
     }
   }
 
-  /// Logout method
   Future<void> logout() async {
     final confirm = await Get.dialog<bool>(
       AlertDialog(
@@ -184,18 +214,21 @@ class AuthController extends GetxController {
     try {
       isLoading.value = true;
 
-      // Prefer repo
       try {
         await _authRepo.signOut();
+        currentUser.value = null;
       } catch (_) {
-        // fallback if repo doesn't have signOut yet
         await FirebaseAuth.instance.signOut();
       }
 
       await _clearSession();
 
-      //Navigate to login
-       Get.offAll(() => const VipeepLoginScreen());
+      // Optional: clear stored locations on logout to avoid user A -> user B leakage
+      if (Get.isRegistered<LocationController>()) {
+        await Get.find<LocationController>().clearAll();
+      }
+
+      Get.offAll(() => const VipeepLoginScreen());
     } catch (e) {
       Get.snackbar(
         "Logout Failed",
@@ -253,6 +286,21 @@ class AuthController extends GetxController {
         return 'Too many attempts. Please try again later.';
       default:
         return e.message ?? 'Authentication failed. Please try again.';
+    }
+  }
+
+  Future<void> loadCurrentUser() async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) {
+      currentUser.value = null;
+      return;
+    }
+
+    try {
+      final user = await _userRepo.getUserById(uid);
+      currentUser.value = user;
+    } catch (_) {
+      currentUser.value = null;
     }
   }
 }

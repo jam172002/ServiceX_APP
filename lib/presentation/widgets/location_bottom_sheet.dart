@@ -1,13 +1,56 @@
 import 'package:flutter/material.dart';
 import 'package:iconsax/iconsax.dart';
 import 'package:get/get.dart';
+import 'package:get_storage/get_storage.dart';
 import 'package:servicex_client_app/utils/constants/colors.dart';
 
-Future<String?> showLocationBottomSheet(BuildContext context) {
-  // Track selected subtitle
-  String selected = 'Model town B, Bahawalpur';
+import '../../domain/models/location_model.dart';
 
-  return showModalBottomSheet<String>(
+Future<dynamic> showLocationBottomSheet(BuildContext context) {
+  final box = GetStorage();
+
+  const kLoc1 = 'saved_location_1';
+  const kLoc2 = 'saved_location_2';
+  const kDefaultLoc = 'default_location';
+
+  LocationModel? selected;
+
+  LocationModel? _readLoc(String key) {
+    final data = box.read(key);
+
+    // New storage format: Map JSON
+    if (data is Map) {
+      return LocationModel.fromJson(Map<String, dynamic>.from(data));
+    }
+
+    // Backward compatibility: old format was just address string
+    if (data is String && data.trim().isNotEmpty) {
+      return LocationModel(
+        label: 'Home',
+        address: data.trim(),
+        lat: 0,
+        lng: 0,
+        isDefault: key == kDefaultLoc,
+      );
+    }
+
+    return null;
+  }
+
+  Future<void> _writeLoc(String key, LocationModel loc) async {
+    await box.write(key, loc.toJson());
+  }
+
+  bool _same(LocationModel a, LocationModel b) {
+    bool close(double x, double y, [double eps = 0.00001]) => (x - y).abs() < eps;
+
+    return a.address.trim().toLowerCase() == b.address.trim().toLowerCase() &&
+        a.label.trim().toLowerCase() == b.label.trim().toLowerCase() &&
+        close(a.lat, b.lat) &&
+        close(a.lng, b.lng);
+  }
+
+  return showModalBottomSheet<dynamic>(
     context: context,
     isScrollControlled: true,
     backgroundColor: XColors.secondaryBG,
@@ -18,6 +61,27 @@ Future<String?> showLocationBottomSheet(BuildContext context) {
       return SafeArea(
         child: StatefulBuilder(
           builder: (context, setState) {
+            // ✅ Read latest values each rebuild
+            final loc1 = _readLoc(kLoc1);
+            final loc2 = _readLoc(kLoc2);
+            final def = _readLoc(kDefaultLoc);
+
+            final saved = <LocationModel>[
+              if (loc1 != null && loc1.address.trim().isNotEmpty) loc1,
+              if (loc2 != null && loc2.address.trim().isNotEmpty) loc2,
+            ];
+
+            // ✅ Initialize selection safely
+            if (selected == null) {
+              if (def != null && saved.any((x) => _same(x, def))) {
+                selected = saved.firstWhere((x) => _same(x, def));
+              } else if (saved.isNotEmpty) {
+                selected = saved.first;
+              }
+            } else if (saved.isNotEmpty && !saved.any((x) => _same(x, selected!))) {
+              selected = saved.first;
+            }
+
             return Padding(
               padding: const EdgeInsets.fromLTRB(20, 0, 20, 30),
               child: Column(
@@ -40,24 +104,26 @@ Future<String?> showLocationBottomSheet(BuildContext context) {
                   ),
                   const SizedBox(height: 12),
 
-                  // Bahawalpur tile
-                  _LocationTile(
-                    title: "Bahawalpur",
-                    subtitle: "Model town B, Bahawalpur",
-                    isSelected: selected == "Model town B, Bahawalpur",
-                    onTap: () =>
-                        setState(() => selected = "Model town B, Bahawalpur"),
-                  ),
-                  const SizedBox(height: 8),
+                  // ---- TILE 1 ----
+                  if (saved.isNotEmpty)
+                    _LocationTile(
+                      title: "Location 1",
+                      subtitle: saved[0].address,
+                      isSelected: selected != null && _same(selected!, saved[0]),
+                      onTap: () => setState(() => selected = saved[0]),
+                    ),
 
-                  // Rajanpur tile
-                  _LocationTile(
-                    title: "Rajanpur",
-                    subtitle: "Taga Colony, Rajanpur",
-                    isSelected: selected == "Taga Colony, Rajanpur",
-                    onTap: () =>
-                        setState(() => selected = "Taga Colony, Rajanpur"),
-                  ),
+                  if (saved.isNotEmpty) const SizedBox(height: 8),
+
+                  // ---- TILE 2 ----
+                  if (saved.length > 1)
+                    _LocationTile(
+                      title: "Location 2",
+                      subtitle: saved[1].address,
+                      isSelected: selected != null && _same(selected!, saved[1]),
+                      onTap: () => setState(() => selected = saved[1]),
+                    ),
+
                   const SizedBox(height: 20),
                   const Divider(height: 1, color: XColors.borderColor),
                   const SizedBox(height: 20),
@@ -74,7 +140,13 @@ Future<String?> showLocationBottomSheet(BuildContext context) {
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(
-                      onPressed: () => Get.back(result: selected),
+                      onPressed: selected == null
+                          ? null
+                          : () async {
+                        final defLoc = selected!.copyWith(isDefault: true);
+                        await _writeLoc(kDefaultLoc, defLoc);
+                        Get.back(result: defLoc); // ✅ return LocationModel
+                      },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: XColors.primary,
                         padding: const EdgeInsets.symmetric(vertical: 14),
