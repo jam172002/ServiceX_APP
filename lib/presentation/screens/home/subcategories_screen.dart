@@ -8,7 +8,14 @@ import 'package:servicex_client_app/presentation/widgets/single_subcatagory.dart
 import 'package:servicex_client_app/utils/constants/images.dart';
 
 class SubcategoriesScreen extends StatelessWidget {
-  const SubcategoriesScreen({super.key});
+  final String categoryId;
+  final String categoryName;
+
+  const SubcategoriesScreen({
+    super.key,
+    required this.categoryId,
+    required this.categoryName,
+  });
 
   @override
   Widget build(BuildContext context) {

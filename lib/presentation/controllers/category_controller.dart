@@ -1,20 +1,40 @@
 import 'dart:async';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:get/get.dart';
-import '../../domain/repos/category_repository.dart';
-import '../../domain/models/service_category_model.dart';
+
+import '../../domain/models/service_category.dart';
+import '../../domain/repos/service_catalog_repo.dart';
 
 class CategoryController extends GetxController {
-  final CategoryRepository _repo;
-  CategoryController({required CategoryRepository repo}) : _repo = repo;
+  final ServiceCatalogRepo _repo = ServiceCatalogRepo(FirebaseFirestore.instance);
 
-  final RxList<ServiceCategoryModel> categories = <ServiceCategoryModel>[].obs;
-  StreamSubscription<List<ServiceCategoryModel>>? _sub;
+  final RxList<ServiceCategory> categories = <ServiceCategory>[].obs;
+  final RxBool isLoading = true.obs;
+  final RxString error = ''.obs;
 
-  void bindCategories() {
+  StreamSubscription<List<ServiceCategory>>? _sub;
+
+  @override
+  void onInit() {
+    super.onInit();
+    _listen();
+  }
+
+  void _listen() {
+    isLoading.value = true;
+    error.value = '';
+
     _sub?.cancel();
-    _sub = _repo.watchAllCategories().listen((list) {
-      categories.assignAll(list);
-    });
+    _sub = _repo.watchCategories().listen(
+          (data) {
+        categories.assignAll(data);
+        isLoading.value = false;
+      },
+      onError: (e) {
+        error.value = e.toString();
+        isLoading.value = false;
+      },
+    );
   }
 
   @override

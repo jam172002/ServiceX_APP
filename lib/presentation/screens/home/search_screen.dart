@@ -6,49 +6,16 @@ import 'package:servicex_client_app/presentation/screens/home/service_provider_p
 import 'package:servicex_client_app/presentation/screens/home/subcategories_screen.dart';
 import 'package:servicex_client_app/utils/constants/colors.dart';
 
-class SearchController extends GetxController {
-  RxString searchQuery = ''.obs;
+import '../../controllers/x_search_controller.dart';
 
-  final List<Map<String, dynamic>> allServices = [
-    {'name': 'Gardening', 'icon': 'assets/icons/garden.png'},
-    {'name': 'Plumbing', 'icon': 'assets/icons/plumber.png'},
-    {'name': 'Cleaning', 'icon': 'assets/icons/cleaning.png'},
-  ];
-
-  final List<Map<String, dynamic>> allProviders = [
-    {'name': 'Ali Services', 'image': 'assets/images/service-provider.jpg'},
-    {'name': 'Ahmed Cleaners', 'image': 'assets/images/service-provider.jpg'},
-  ];
-
-  List<Map<String, dynamic>> get filteredServices {
-    if (searchQuery.value.isEmpty) return [];
-    return allServices
-        .where(
-          (service) => service['name'].toLowerCase().contains(
-            searchQuery.value.toLowerCase(),
-          ),
-        )
-        .toList();
-  }
-
-  List<Map<String, dynamic>> get filteredProviders {
-    if (searchQuery.value.isEmpty) return [];
-    return allProviders
-        .where(
-          (provider) => provider['name'].toLowerCase().contains(
-            searchQuery.value.toLowerCase(),
-          ),
-        )
-        .toList();
-  }
-}
 
 class SearchScreen extends StatelessWidget {
   const SearchScreen({super.key});
 
+
   @override
   Widget build(BuildContext context) {
-    final controller = Get.put(SearchController());
+    final controller = Get.find<XSearchController>();
 
     Widget buildSectionTitle(String title) {
       return Padding(
@@ -61,10 +28,17 @@ class SearchScreen extends StatelessWidget {
     }
 
     Widget buildServiceTile(Map<String, dynamic> service) {
+      final iconUrl = (service['iconUrl'] ?? '') as String;
+
       return Padding(
         padding: const EdgeInsets.symmetric(vertical: 6),
         child: GestureDetector(
-          onTap: () => Get.to(() => SubcategoriesScreen()),
+          onTap: () => Get.to(
+                () => SubcategoriesScreen(
+              categoryId: (service['categoryId'] ?? '') as String,
+              categoryName: (service['categoryName'] ?? '') as String,
+            ),
+          ),
           child: Row(
             children: [
               CircleAvatar(
@@ -72,11 +46,13 @@ class SearchScreen extends StatelessWidget {
                 radius: 25,
                 child: SizedBox(
                   height: 22,
-                  child: Image.asset(
-                    service['icon'],
-                    fit: BoxFit.contain,
-                    color: XColors.primary,
-                    colorBlendMode: BlendMode.srcIn,
+                  child: ColorFiltered(
+                    colorFilter: const ColorFilter.mode(XColors.primary, BlendMode.srcIn),
+                    child: Image.network(
+                      iconUrl,
+                      fit: BoxFit.contain,
+                      errorBuilder: (_, __, ___) => const Icon(Icons.category, color: XColors.primary),
+                    ),
                   ),
                 ),
               ),
@@ -141,8 +117,8 @@ class SearchScreen extends StatelessWidget {
                     );
                   }
 
-                  final services = controller.filteredServices;
-                  final providers = controller.filteredProviders;
+                  final services = controller.filteredServices; // ✅ now List<ServiceSubcategory>
+                  final providers = controller.filteredProviders; //
 
                   if (services.isEmpty && providers.isEmpty) {
                     // No results found illustration
@@ -169,7 +145,7 @@ class SearchScreen extends StatelessWidget {
                   return ListView(
                     children: [
                       if (services.isNotEmpty) buildSectionTitle('Services'),
-                      ...services.map((s) => buildServiceTile(s)),
+                      ...services.map((s) => buildServiceTile(s as Map<String, dynamic>)),
                       if (services.isNotEmpty && providers.isNotEmpty)
                         const Padding(
                           padding: EdgeInsets.symmetric(vertical: 8),

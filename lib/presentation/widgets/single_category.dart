@@ -3,7 +3,7 @@ import 'package:servicex_client_app/utils/constants/colors.dart';
 
 class XSingleCategory extends StatefulWidget {
   final String title;
-  final String icon;
+  final String icon; // can be URL now
   final VoidCallback onTap;
 
   const XSingleCategory({
@@ -20,6 +20,7 @@ class XSingleCategory extends StatefulWidget {
 class _XSingleCategoryState extends State<XSingleCategory>
     with SingleTickerProviderStateMixin {
   double scale = 1.0;
+
 
   @override
   Widget build(BuildContext context) {
@@ -45,15 +46,24 @@ class _XSingleCategoryState extends State<XSingleCategory>
                     shape: BoxShape.circle,
                     color: XColors.lightTint.withValues(alpha: 0.5),
                   ),
-                  child: Padding(
-                    padding: const EdgeInsets.all(10),
-                    child: Image.asset(
-                      widget.icon,
-                      fit: BoxFit.contain,
-                      color: XColors.primary,
-                      colorBlendMode: BlendMode.srcIn,
-                    ),
-                  ),
+              child: (widget.icon.trim().isEmpty)
+                  ? const Icon(Icons.category, color: XColors.primary)
+                  : (widget.icon.startsWith('http'))
+                  ? ColorFiltered(
+                colorFilter: const ColorFilter.mode(XColors.primary, BlendMode.srcIn),
+                child: Image.network(
+                  widget.icon,
+                  fit: BoxFit.contain,
+                  errorBuilder: (_, __, ___) => const Icon(Icons.category, color: XColors.primary),
+                ),
+              )
+                  : Image.asset(
+                widget.icon,
+                fit: BoxFit.contain,
+                color: XColors.primary,
+                colorBlendMode: BlendMode.srcIn,
+              ),
+
                 ),
                 const SizedBox(height: 4),
                 Text(

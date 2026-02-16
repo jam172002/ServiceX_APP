@@ -1,43 +1,56 @@
 import 'package:flutter/material.dart';
-import 'package:get/route_manager.dart';
+import 'package:get/get.dart';
 import 'package:servicex_client_app/presentation/widgets/single_category.dart';
 import 'package:servicex_client_app/presentation/screens/home/subcategories_screen.dart';
+
+import '../controllers/category_controller.dart';
 
 class CategoryListView extends StatelessWidget {
   const CategoryListView({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final items = [
-      {'title': "Electric", 'img': 'assets/icons/flash.png'},
-      {'title': "AC Repair", 'img': 'assets/icons/ac.png'},
-      {'title': "Plumber", 'img': 'assets/icons/plumber.png'},
-      {'title': "Car Wash", 'img': 'assets/icons/carwash.png'},
-      {'title': "Painter", 'img': 'assets/icons/paint.png'},
-      {'title': "Gardener", 'img': 'assets/icons/garden.png'},
-      {'title': "Cleaning", 'img': 'assets/icons/cleaning.png'},
-      {'title': "Mechanic", 'img': 'assets/icons/mechanic.png'},
-    ];
+    final c = Get.find<CategoryController>(); // ✅ use existing controller
 
     return Padding(
       padding: const EdgeInsets.only(left: 16.0),
       child: SizedBox(
         height: 85,
-        child: ListView.separated(
-          scrollDirection: Axis.horizontal,
-          itemCount: 8,
-          separatorBuilder: (_, __) => const SizedBox(width: 16),
-          itemBuilder: (context, index) {
-            final item = items[index];
-            return XSingleCategory(
-              title: item['title']!,
-              icon: item['img']!,
-              onTap: () {
-                Get.to(() => SubcategoriesScreen());
-              },
+        child: Obx(() {
+          if (c.isLoading.value) {
+            return const Center(
+              child: SizedBox(height: 18, width: 18, child: CircularProgressIndicator()),
             );
-          },
-        ),
+          }
+
+          if (c.error.value.isNotEmpty) {
+            return Center(child: Text('Error: ${c.error.value}'));
+          }
+
+          if (c.categories.isEmpty) {
+            return const Center(child: Text('No categories yet'));
+          }
+
+          return ListView.separated(
+            scrollDirection: Axis.horizontal,
+            itemCount: c.categories.length,
+            separatorBuilder: (_, __) => const SizedBox(width: 16),
+            itemBuilder: (context, index) {
+              final item = c.categories[index];
+
+              return XSingleCategory(
+                title: item.name,
+                icon: item.iconUrl,
+                onTap: () {
+                  Get.to(() => SubcategoriesScreen(
+                    categoryId: item.id,
+                    categoryName: item.name,
+                  ));
+                },
+              );
+            },
+          );
+        }),
       ),
     );
   }

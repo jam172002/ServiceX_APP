@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:get/route_manager.dart';
-import 'package:servicex_client_app/presentation/widgets/single_category.dart';
+import 'package:get/get.dart';
+import 'package:servicex_client_app/domain/models/service_category.dart';
 import 'package:servicex_client_app/presentation/widgets/category_shimmer.dart';
+import 'package:servicex_client_app/presentation/widgets/single_category.dart';
 import 'package:servicex_client_app/presentation/screens/home/subcategories_screen.dart';
 
 class CategoryGrid extends StatelessWidget {
-  final List<Map<String, String>> categories;
+  final List<ServiceCategory> categories;
   final bool isLoading;
 
   const CategoryGrid({
@@ -18,7 +19,7 @@ class CategoryGrid extends StatelessWidget {
   Widget build(BuildContext context) {
     return GridView.builder(
       padding: EdgeInsets.zero,
-      itemCount: categories.length,
+      itemCount: isLoading ? 8 : categories.length,
       physics: const NeverScrollableScrollPhysics(),
       shrinkWrap: true,
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
@@ -33,10 +34,13 @@ class CategoryGrid extends StatelessWidget {
         final item = categories[index];
 
         return XSingleCategory(
-          title: item["title"]!,
-          icon: item["img"]!,
+          title: item.name,
+          icon: item.iconUrl, // ✅ URL now
           onTap: () {
-            Get.to(() => SubcategoriesScreen());
+            Get.to(() => SubcategoriesScreen(
+              categoryId: item.id,
+              categoryName: item.name,
+            ));
           },
         );
       },
