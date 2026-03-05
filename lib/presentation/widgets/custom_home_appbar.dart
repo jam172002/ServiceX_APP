@@ -6,7 +6,7 @@ class CustomHomeAppBar extends StatelessWidget implements PreferredSizeWidget {
   final String name;
   final String location;
   final String country;
-  final String? imagePath; // asset path
+  final String? imagePath; // asset path OR network URL
 
   final VoidCallback? onNotificationTap;
   final VoidCallback? onSettingTap;
@@ -28,10 +28,16 @@ class CustomHomeAppBar extends StatelessWidget implements PreferredSizeWidget {
   @override
   Size get preferredSize => const Size.fromHeight(95);
 
-  bool isValidAsset(String? path) {
-    if (path == null) return false;
-    if (path.trim().isEmpty) return false;
-    return true;
+  bool get _isNetworkImage {
+    if (imagePath == null) return false;
+    return imagePath!.startsWith('http://') ||
+        imagePath!.startsWith('https://');
+  }
+
+  bool get _isAssetImage {
+    if (imagePath == null) return false;
+    if (imagePath!.trim().isEmpty) return false;
+    return !_isNetworkImage;
   }
 
   @override
@@ -46,25 +52,18 @@ class CustomHomeAppBar extends StatelessWidget implements PreferredSizeWidget {
         ),
         child: Row(
           children: [
-            // ---------------- PROFILE IMAGE / FALLBACK ----------------
+            // ── PROFILE IMAGE ──────────────────────────────────────────
             GestureDetector(
               onTap: onProfileTap,
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(12),
-                child: isValidAsset(imagePath)
-                    ? Image.asset(
-                        imagePath!,
-                        height: 50,
-                        width: 50,
-                        fit: BoxFit.cover,
-                      )
-                    : _defaultProfileBox(),
+                child: _buildProfileImage(),
               ),
             ),
 
             const SizedBox(width: 12),
 
-            // ---------------- NAME + LOCATION ----------------
+            // ── NAME + LOCATION ────────────────────────────────────────
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -80,11 +79,10 @@ class CustomHomeAppBar extends StatelessWidget implements PreferredSizeWidget {
                       fontWeight: FontWeight.w600,
                     ),
                   ),
-                  SizedBox(height: 4),
+                  const SizedBox(height: 4),
                   GestureDetector(
                     onTap: onLocationTap,
                     child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
                         const Icon(
                           Iconsax.location5,
@@ -92,11 +90,9 @@ class CustomHomeAppBar extends StatelessWidget implements PreferredSizeWidget {
                           size: 15,
                         ),
                         const SizedBox(width: 4),
-
-                        // Location Text
                         Flexible(
                           child: Text(
-                            "$location, $country",
+                            '$location, $country',
                             style: const TextStyle(
                               color: Colors.white70,
                               fontSize: 11,
@@ -105,7 +101,6 @@ class CustomHomeAppBar extends StatelessWidget implements PreferredSizeWidget {
                             maxLines: 1,
                           ),
                         ),
-
                         const Icon(
                           Icons.keyboard_arrow_down_rounded,
                           color: Colors.white70,
@@ -117,9 +112,12 @@ class CustomHomeAppBar extends StatelessWidget implements PreferredSizeWidget {
                 ],
               ),
             ),
-            SizedBox(width: 8),
-            // ---------------- NOTIFICATION + MESSAGE ----------------
+
+            const SizedBox(width: 8),
+
+            // ── ICONS ──────────────────────────────────────────────────
             Row(
+              mainAxisSize: MainAxisSize.min,
               children: [
                 GestureDetector(
                   onTap: onNotificationTap,
@@ -146,7 +144,34 @@ class CustomHomeAppBar extends StatelessWidget implements PreferredSizeWidget {
     );
   }
 
-  // ---------------- DEFAULT PROFILE BOX ----------------
+  Widget _buildProfileImage() {
+    if (_isNetworkImage) {
+      return Image.network(
+        imagePath!,
+        height: 50,
+        width: 50,
+        fit: BoxFit.cover,
+        errorBuilder: (_, __, ___) => _defaultProfileBox(),
+        loadingBuilder: (_, child, loadingProgress) {
+          if (loadingProgress == null) return child;
+          return _defaultProfileBox();
+        },
+      );
+    }
+
+    if (_isAssetImage) {
+      return Image.asset(
+        imagePath!,
+        height: 50,
+        width: 50,
+        fit: BoxFit.cover,
+        errorBuilder: (_, __, ___) => _defaultProfileBox(),
+      );
+    }
+
+    return _defaultProfileBox();
+  }
+
   Widget _defaultProfileBox() {
     return Container(
       height: 50,
