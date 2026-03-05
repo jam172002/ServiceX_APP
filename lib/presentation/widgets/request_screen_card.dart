@@ -13,7 +13,11 @@ class RequestScreenCard extends StatelessWidget {
   final String date;
   final String time;
   final int additionalImages;
-  final String imageAsset;
+
+  /// Supply either a local asset path OR a network URL — not both.
+  final String? imageAsset;
+  final String? imageUrl;
+
   final VoidCallback onTap;
 
   const RequestScreenCard({
@@ -28,67 +32,117 @@ class RequestScreenCard extends StatelessWidget {
     required this.date,
     required this.time,
     required this.additionalImages,
-    required this.imageAsset,
     required this.onTap,
+    this.imageAsset,
+    this.imageUrl,
   });
 
-  Color getStatusColor(String status) {
-    switch (status.toLowerCase()) {
+  Color _statusColor(String s) {
+    switch (s.toLowerCase()) {
       case 'new':
-        return Colors.blue;
+      case 'newrequest':        return Colors.blue;
+      case 'pending':           return Colors.blueGrey;
       case 'under review':
-        return Colors.orange;
-      case 'accepted':
-        return Colors.green;
+      case 'underreview':       return Colors.orange;
+      case 'accepted':          return Colors.green;
+      case 'in progress':
       case 'inprogress':
-        return Colors.purple;
-      case 'completed':
-        return Colors.teal;
-      case 'cancelled':
-        return Colors.red;
-      default:
-        return Colors.grey;
+      case 'ongoing':           return Colors.purple;
+      case 'completed':         return Colors.teal;
+      case 'cancelled':         return Colors.red;
+      default:                  return Colors.grey;
     }
+  }
+
+  Widget _buildImage() {
+    const radius = BorderRadius.only(
+      topLeft: Radius.circular(8),
+      bottomLeft: Radius.circular(8),
+    );
+    const w = 130.0;
+    const h = 148.0;
+
+    if (imageUrl != null && imageUrl!.isNotEmpty) {
+      return ClipRRect(
+        borderRadius: radius,
+        child: Image.network(
+          imageUrl!,
+          width: w,
+          height: h,
+          fit: BoxFit.cover,
+          errorBuilder: (_, __, ___) => _placeholder(w, h, radius),
+          loadingBuilder: (_, child, progress) => progress == null
+              ? child
+              : _placeholder(w, h, radius, loading: true),
+        ),
+      );
+    }
+
+    if (imageAsset != null && imageAsset!.isNotEmpty) {
+      return ClipRRect(
+        borderRadius: radius,
+        child: Image.asset(
+          imageAsset!,
+          width: w,
+          height: h,
+          fit: BoxFit.cover,
+          errorBuilder: (_, __, ___) => _placeholder(w, h, radius),
+        ),
+      );
+    }
+
+    return _placeholder(w, h, radius);
+  }
+
+  Widget _placeholder(double w, double h, BorderRadius radius,
+      {bool loading = false}) {
+    return ClipRRect(
+      borderRadius: radius,
+      child: Container(
+        width: w,
+        height: h,
+        color: XColors.grey.withValues(alpha: 0.15),
+        child: loading
+            ? const Center(
+          child: SizedBox(
+            width: 24,
+            height: 24,
+            child: CircularProgressIndicator(strokeWidth: 2),
+          ),
+        )
+            : const Icon(Icons.image_not_supported_outlined,
+            color: Colors.grey, size: 32),
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
+    final statusColor = _statusColor(status);
+
     return GestureDetector(
       onTap: onTap,
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
         child: Container(
-          height: 148, // reduced from 175
+          height: 148,
           decoration: BoxDecoration(
             color: XColors.lightTint.withValues(alpha: 0.5),
-            borderRadius: BorderRadius.circular(8), // slightly smaller
+            borderRadius: BorderRadius.circular(8),
           ),
           child: Row(
             children: [
-              //? ---------------- LEFT IMAGE ----------------
+              //? ── Left image ───────────────────────────────────────
               Stack(
                 children: [
-                  ClipRRect(
-                    borderRadius: const BorderRadius.only(
-                      topLeft: Radius.circular(8),
-                      bottomLeft: Radius.circular(8),
-                    ),
-                    child: Image.asset(
-                      imageAsset,
-                      width: 130,
-                      height: 148,
-                      fit: BoxFit.cover,
-                    ),
-                  ),
+                  _buildImage(),
                   if (additionalImages > 0)
                     Positioned(
                       top: 6,
                       right: 6,
                       child: Container(
                         padding: const EdgeInsets.symmetric(
-                          horizontal: 4,
-                          vertical: 2,
-                        ),
+                            horizontal: 4, vertical: 2),
                         decoration: BoxDecoration(
                           color: XColors.black.withValues(alpha: 0.6),
                           borderRadius: BorderRadius.circular(4),
@@ -97,7 +151,7 @@ class RequestScreenCard extends StatelessWidget {
                           '+$additionalImages',
                           style: const TextStyle(
                             color: Colors.white,
-                            fontSize: 9, // smaller
+                            fontSize: 9,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
@@ -106,19 +160,19 @@ class RequestScreenCard extends StatelessWidget {
                 ],
               ),
 
-              //? ---------------- RIGHT DETAILS ----------------
+              //? ── Right details ────────────────────────────────────
               Expanded(
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(8, 12, 12, 12),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Top tags
+                      // Tags row
                       Row(
                         children: [
                           _Tag(label: category, color: XColors.primary),
                           const SizedBox(width: 4),
-                          _Tag(label: status, color: getStatusColor(status)),
+                          _Tag(label: status, color: statusColor),
                         ],
                       ),
                       const SizedBox(height: 6),
@@ -147,11 +201,10 @@ class RequestScreenCard extends StatelessWidget {
 
                       const Spacer(),
 
-                      // Bottom row
+                      // Budget / job type / date / time
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          // Left: Job type & budget
                           Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
@@ -173,40 +226,28 @@ class RequestScreenCard extends StatelessWidget {
                               ),
                             ],
                           ),
-
-                          // Right: Date & Time
                           Column(
                             crossAxisAlignment: CrossAxisAlignment.end,
                             children: [
-                              Text(
-                                date,
-                                style: const TextStyle(
-                                  fontSize: 10,
-                                  color: XColors.grey,
-                                ),
-                              ),
+                              Text(date,
+                                  style: const TextStyle(
+                                      fontSize: 10, color: XColors.grey)),
                               const SizedBox(height: 2),
-                              Text(
-                                time,
-                                style: const TextStyle(
-                                  fontSize: 10,
-                                  color: XColors.grey,
-                                ),
-                              ),
+                              Text(time,
+                                  style: const TextStyle(
+                                      fontSize: 10, color: XColors.grey)),
                             ],
                           ),
                         ],
                       ),
                       const SizedBox(height: 2),
+
                       // Location
                       Row(
                         mainAxisAlignment: MainAxisAlignment.end,
                         children: [
-                          const Icon(
-                            Iconsax.location5,
-                            size: 10, // smaller
-                            color: Colors.black54,
-                          ),
+                          const Icon(Iconsax.location5,
+                              size: 10, color: Colors.black54),
                           const SizedBox(width: 4),
                           Flexible(
                             child: Text(
@@ -214,7 +255,7 @@ class RequestScreenCard extends StatelessWidget {
                               overflow: TextOverflow.ellipsis,
                               style: const TextStyle(
                                 color: Colors.black54,
-                                fontSize: 9, // smaller
+                                fontSize: 9,
                                 fontStyle: FontStyle.italic,
                               ),
                             ),
@@ -233,11 +274,9 @@ class RequestScreenCard extends StatelessWidget {
   }
 }
 
-// Top row tags
 class _Tag extends StatelessWidget {
   final String label;
   final Color color;
-
   const _Tag({required this.label, required this.color});
 
   @override
@@ -251,7 +290,7 @@ class _Tag extends StatelessWidget {
       child: Text(
         label,
         style: TextStyle(
-          fontSize: 9, // smaller
+          fontSize: 9,
           color: color,
           fontWeight: FontWeight.w600,
         ),

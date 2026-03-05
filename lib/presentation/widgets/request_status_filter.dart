@@ -5,63 +5,70 @@ class RequestStatusFilter extends StatelessWidget {
   final String selectedStatus;
   final Function(String) onStatusSelected;
 
+  /// Optional override — if not supplied the default list below is used.
+  /// Pass [JobRequestsController.filterLabels] to keep them in sync.
+  final List<String>? statuses;
+
   const RequestStatusFilter({
     super.key,
     required this.selectedStatus,
     required this.onStatusSelected,
+    this.statuses,
   });
 
-  final List<String> statuses = const [
+  // Default labels — kept in sync with JobRequestsController.filterLabels
+  // and jobStatusToString() / statusLabel() helpers.
+  static const List<String> _defaultStatuses = [
     'All',
-    'New',
+    'Pending',
     'Under Review',
     'Accepted',
-    'InProgress',
+    'In Progress',
+    'Ongoing',
     'Completed',
     'Cancelled',
   ];
 
-  Color getStatusColor(String status) {
-    switch (status.toLowerCase()) {
+  Color _statusColor(String s) {
+    switch (s.toLowerCase()) {
+      case 'all':          return XColors.primary;
       case 'new':
-        return Colors.blue;
-      case 'under review':
-        return Colors.orange;
-      case 'accepted':
-        return Colors.green;
-      case 'inprogress':
-        return Colors.purple;
-      case 'completed':
-        return Colors.teal;
-      case 'cancelled':
-        return Colors.red;
-      case 'all':
-        return XColors.primary;
-      default:
-        return Colors.grey;
+      case 'newrequest':   return Colors.blue;
+      case 'pending':      return Colors.blueGrey;
+      case 'under review': return Colors.orange;
+      case 'accepted':     return Colors.green;
+      case 'in progress':
+      case 'ongoing':      return Colors.purple;
+      case 'completed':    return Colors.teal;
+      case 'cancelled':    return Colors.red;
+      default:             return Colors.grey;
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final items = statuses ?? _defaultStatuses;
+
     return SizedBox(
       height: 29,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 12),
-        itemCount: statuses.length,
+        itemCount: items.length,
         separatorBuilder: (_, __) => const SizedBox(width: 8),
         itemBuilder: (context, index) {
-          final status = statuses[index];
+          final status = items[index];
           final isSelected = status == selectedStatus;
+          final color = _statusColor(status);
 
           return GestureDetector(
             onTap: () => onStatusSelected(status),
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              padding:
+              const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               decoration: BoxDecoration(
                 color: isSelected
-                    ? getStatusColor(status).withValues(alpha: 0.2)
+                    ? color.withValues(alpha: 0.2)
                     : XColors.grey.withValues(alpha: 0.2),
                 borderRadius: BorderRadius.circular(6),
               ),
@@ -71,7 +78,7 @@ class RequestStatusFilter extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
-                    color: isSelected ? getStatusColor(status) : XColors.grey,
+                    color: isSelected ? color : XColors.grey,
                   ),
                 ),
               ),
