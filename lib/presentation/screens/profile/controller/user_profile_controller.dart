@@ -4,7 +4,7 @@ import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:servicex_client_app/domain/enums/app_enums.dart';
 import 'package:servicex_client_app/domain/repos/user_repository.dart';
-import 'package:servicex_client_app/presentation/controllers/auth_controller.dart';
+import 'package:servicex_client_app/presentation/screens/authentication/controller/auth_controller.dart';
 
 class UserProfileController extends GetxController {
   final UserRepository _userRepo;

@@ -41,6 +41,7 @@ class ConfirmationDialog extends StatelessWidget {
       content: SingleChildScrollView(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
           children: [
             Text('Service: $service'),
             Text('Sub-Type: ${subType ?? "-"}'),
@@ -51,23 +52,33 @@ class ConfirmationDialog extends StatelessWidget {
             Text('Location: $location'),
             const SizedBox(height: 10),
             Text('Details: $details'),
-            if (images.isNotEmpty)
-              SizedBox(
-                height: 80,
-                child: ListView.builder(
-                  scrollDirection: Axis.horizontal,
-                  itemCount: images.length,
-                  itemBuilder: (_, index) => Padding(
-                    padding: const EdgeInsets.only(right: 8.0),
-                    child: Image.file(
-                      images[index],
-                      width: 80,
-                      height: 80,
-                      fit: BoxFit.cover,
+            if (images.isNotEmpty) ...[
+              const SizedBox(height: 8),
+              // ── Use a horizontal SingleChildScrollView + Row instead of
+              //    ListView.builder — ListView does not support intrinsic
+              //    dimensions and crashes inside AlertDialog / IntrinsicWidth.
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  children: images
+                      .map(
+                        (file) => Padding(
+                      padding: const EdgeInsets.only(right: 8.0),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(6),
+                        child: Image.file(
+                          file,
+                          width: 80,
+                          height: 80,
+                          fit: BoxFit.cover,
+                        ),
+                      ),
                     ),
-                  ),
+                  )
+                      .toList(),
                 ),
               ),
+            ],
             const SizedBox(height: 10),
             Text(
               'Job Type: ${forAll ? "Open for All" : "Personal Request"}',

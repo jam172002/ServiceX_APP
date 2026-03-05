@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'package:get/get.dart';
-import '../../domain/repos/booking_repository.dart';
-import '../../domain/models/booking_model.dart';
+import '../../../../domain/repos/booking_repository.dart';
+import '../../../../domain/models/booking_model.dart';
 
 class BookingController extends GetxController {
   final BookingRepository _repo;

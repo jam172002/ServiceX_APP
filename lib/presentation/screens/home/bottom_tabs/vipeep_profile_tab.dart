@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:iconsax/iconsax.dart';
-import 'package:servicex_client_app/presentation/controllers/auth_controller.dart';
+import 'package:servicex_client_app/presentation/screens/authentication/controller/auth_controller.dart';
 import 'package:servicex_client_app/presentation/screens/profile/controller/user_profile_controller.dart';
 import 'package:servicex_client_app/presentation/screens/service_requests/create_service_job_screen.dart';
 import 'package:servicex_client_app/presentation/screens/service_provider_profile/service_provider_profile_screen.dart';

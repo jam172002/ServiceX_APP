@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:servicex_client_app/presentation/widgets/common_appbar.dart';
 import 'package:servicex_client_app/presentation/widgets/category_grid_view.dart';
-import '../../controllers/category_controller.dart';
+import 'controller/category_controller.dart';
 
 class AllCatagoriesScreen extends StatelessWidget {
   const AllCatagoriesScreen({super.key});

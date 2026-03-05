@@ -3,7 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 class ServiceCategory {
   final String id;
   final String name;
-  final String iconUrl; // store icon key string e.g. "plumbing"
+  final String iconUrl;   // full Firebase Storage URL
   final String imageUrl;
   final DateTime createdAt;
   final DateTime updatedAt;
@@ -17,15 +17,33 @@ class ServiceCategory {
     required this.updatedAt,
   });
 
-  factory ServiceCategory.fromDoc(DocumentSnapshot<Map<String, dynamic>> doc) {
+  // ── Used by ServiceCatalogRepo (stream / query) ───────────────
+  factory ServiceCategory.fromDoc(
+      DocumentSnapshot<Map<String, dynamic>> doc) {
     final d = doc.data()!;
     return ServiceCategory(
       id: doc.id,
       name: (d['name'] ?? '') as String,
       iconUrl: (d['iconUrl'] ?? '') as String,
       imageUrl: (d['imageUrl'] ?? '') as String,
-      createdAt: (d['createdAt'] as Timestamp?)?.toDate() ?? DateTime.fromMillisecondsSinceEpoch(0),
-      updatedAt: (d['updatedAt'] as Timestamp?)?.toDate() ?? DateTime.fromMillisecondsSinceEpoch(0),
+      createdAt: (d['createdAt'] as Timestamp?)?.toDate() ??
+          DateTime.fromMillisecondsSinceEpoch(0),
+      updatedAt: (d['updatedAt'] as Timestamp?)?.toDate() ??
+          DateTime.fromMillisecondsSinceEpoch(0),
+    );
+  }
+
+  // ── Used by CategoryRepository (legacy fromJson path) ────────
+  factory ServiceCategory.fromJson(Map<String, dynamic> d) {
+    return ServiceCategory(
+      id: (d['id'] ?? '') as String,
+      name: (d['name'] ?? '') as String,
+      iconUrl: (d['iconUrl'] ?? '') as String,
+      imageUrl: (d['imageUrl'] ?? '') as String,
+      createdAt: (d['createdAt'] as Timestamp?)?.toDate() ??
+          DateTime.fromMillisecondsSinceEpoch(0),
+      updatedAt: (d['updatedAt'] as Timestamp?)?.toDate() ??
+          DateTime.fromMillisecondsSinceEpoch(0),
     );
   }
 

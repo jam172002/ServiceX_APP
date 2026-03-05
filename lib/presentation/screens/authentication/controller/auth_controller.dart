@@ -5,15 +5,15 @@ import 'package:get_storage/get_storage.dart';
 import 'package:iconsax/iconsax.dart';
 import 'package:servicex_client_app/presentation/controllers/location_controller.dart';
 
-import '../../domain/enums/app_enums.dart';
-import '../../domain/models/location_model.dart';
-import '../../domain/models/user_model.dart';
-import '../../domain/repos/auth_repository.dart';
-import '../../domain/repos/user_repository.dart';
-import '../../domain/repos/wallet_repository.dart';
-import '../screens/authentication/login_screen.dart';
-import '../screens/navigation/vipeep_navigation.dart';
-import '../widgets/simple_alert_dialog.dart';
+import '../../../../domain/enums/app_enums.dart';
+import '../../../../domain/models/location_model.dart';
+import '../../../../domain/models/user_model.dart';
+import '../../../../domain/repos/auth_repository.dart';
+import '../../../../domain/repos/user_repository.dart';
+import '../../../../domain/repos/wallet_repository.dart';
+import '../login_screen.dart';
+import '../../navigation/vipeep_navigation.dart';
+import '../../../widgets/simple_alert_dialog.dart';
 
 class AuthController extends GetxController {
   final AuthRepository _authRepo;

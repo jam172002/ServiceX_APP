@@ -21,7 +21,7 @@ import 'package:servicex_client_app/utils/constants/colors.dart';
 import 'package:servicex_client_app/utils/constants/images.dart';
 
 import '../../../../domain/models/location_model.dart';
-import '../../../controllers/auth_controller.dart';
+import '../../authentication/controller/auth_controller.dart';
 import '../../location/location_selector_screen.dart';
 
 class VipeepHomeScreen extends StatefulWidget {

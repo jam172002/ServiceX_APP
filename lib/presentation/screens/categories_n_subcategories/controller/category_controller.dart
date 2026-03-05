@@ -2,8 +2,8 @@ import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:get/get.dart';
 
-import '../../domain/models/service_category.dart';
-import '../../domain/repos/service_catalog_repo.dart';
+import '../../../../domain/models/service_category.dart';
+import '../../../../domain/repos/service_catalog_repo.dart';
 
 class CategoryController extends GetxController {
   final ServiceCatalogRepo _repo = ServiceCatalogRepo(FirebaseFirestore.instance);

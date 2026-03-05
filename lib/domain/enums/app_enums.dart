@@ -2,7 +2,7 @@ enum AppRole { user, provider }
 
 enum Gender { male, female, other }
 
-enum JobStatus { newRequest, underReview, accepted, inProgress, completed, cancelled }
+enum JobStatus { newRequest, underReview, accepted, inProgress, completed, cancelled, ongoing, pending }
 
 enum BookingStatus { booked, pending, completed, cancelled }
 

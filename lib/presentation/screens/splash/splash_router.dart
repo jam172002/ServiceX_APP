@@ -3,7 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 
-import '../../controllers/auth_controller.dart';
+import '../authentication/controller/auth_controller.dart';
 import '../authentication/login_screen.dart';
 import '../navigation/vipeep_navigation.dart';
 import '../onboarding/onboarding.dart';

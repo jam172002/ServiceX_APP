@@ -4,7 +4,7 @@ import 'package:get/get.dart';
 import 'package:iconsax/iconsax.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:servicex_client_app/domain/enums/app_enums.dart';
-import 'package:servicex_client_app/presentation/controllers/auth_controller.dart';
+import 'package:servicex_client_app/presentation/screens/authentication/controller/auth_controller.dart';
 import 'package:servicex_client_app/presentation/screens/profile/controller/user_profile_controller.dart';
 import 'package:servicex_client_app/presentation/widgets/common_appbar.dart';
 import 'package:servicex_client_app/utils/constants/colors.dart';
@@ -29,7 +29,6 @@ class _UserProfileEditScreenState extends State<UserProfileEditScreen> {
   String? _nameError;
   String? _phoneError;
 
-  final _emailRegex = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
 
   @override
   void initState() {

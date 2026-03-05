@@ -12,7 +12,7 @@ import 'package:servicex_client_app/utils/constants/colors.dart';
 import 'package:servicex_client_app/utils/constants/images.dart';
 import '../../../../domain/enums/app_enums.dart';
 import '../../../../domain/models/location_model.dart';
-import '../../controllers/auth_controller.dart';
+import 'controller/auth_controller.dart';
 
 class VipeepSignupScreen extends StatefulWidget {
   const VipeepSignupScreen({super.key});
