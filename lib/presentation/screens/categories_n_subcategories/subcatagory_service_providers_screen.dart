@@ -3,7 +3,7 @@ import 'package:get/get_navigation/src/extension_navigation.dart';
 import 'package:get/state_manager.dart';
 import 'package:servicex_client_app/presentation/widgets/common_appbar.dart';
 import 'package:servicex_client_app/presentation/widgets/search_filter_container.dart';
-import 'package:servicex_client_app/presentation/screens/home/service_provider_profile_screen.dart';
+import 'package:servicex_client_app/presentation/screens/service_provider_profile/service_provider_profile_screen.dart';
 import 'package:servicex_client_app/presentation/widgets/service_provider_screen_card.dart';
 
 class CatagoryServiceProviderScreen extends StatelessWidget {

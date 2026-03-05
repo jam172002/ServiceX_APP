@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+ import 'package:flutter/material.dart';
 import 'package:get/get_navigation/src/extension_navigation.dart';
 import 'package:get/utils.dart';
 import 'package:servicex_client_app/presentation/widgets/common_appbar.dart';
@@ -7,14 +7,14 @@ import 'package:servicex_client_app/presentation/widgets/request_screen_card.dar
 import 'package:servicex_client_app/presentation/widgets/request_status_filter.dart';
 import 'package:servicex_client_app/utils/constants/images.dart';
 
-class VipeepRequestScreen extends StatefulWidget {
-  const VipeepRequestScreen({super.key});
+class VipeepRequestTab extends StatefulWidget {
+  const VipeepRequestTab({super.key});
 
   @override
-  State<VipeepRequestScreen> createState() => _VipeepRequestScreenState();
+  State<VipeepRequestTab> createState() => _VipeepRequestTabState();
 }
 
-class _VipeepRequestScreenState extends State<VipeepRequestScreen> {
+class _VipeepRequestTabState extends State<VipeepRequestTab> {
   String selectedStatus = 'All';
 
   // Demo data for testing
@@ -49,7 +49,7 @@ class _VipeepRequestScreenState extends State<VipeepRequestScreen> {
               .toList();
 
     return Scaffold(
-      appBar: XAppBar(title: 'Job Requests', showBackIcon: false),
+      appBar: XAppBar(title: 'Job Requests Tab', showBackIcon: false),
       body: SafeArea(
         child: Column(
           children: [

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:servicex_client_app/presentation/widgets/single_category.dart';
-import 'package:servicex_client_app/presentation/screens/home/subcategories_screen.dart';
+import 'package:servicex_client_app/presentation/screens/categories_n_subcategories/all_subcategories_screen.dart';
 
 import '../controllers/category_controller.dart';
 

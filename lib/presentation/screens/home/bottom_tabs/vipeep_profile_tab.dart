@@ -3,8 +3,8 @@ import 'package:get/get.dart';
 import 'package:iconsax/iconsax.dart';
 import 'package:servicex_client_app/presentation/controllers/auth_controller.dart';
 import 'package:servicex_client_app/presentation/screens/profile/controller/user_profile_controller.dart';
-import 'package:servicex_client_app/presentation/screens/home/create_service_job_screen.dart';
-import 'package:servicex_client_app/presentation/screens/home/service_provider_profile_screen.dart';
+import 'package:servicex_client_app/presentation/screens/service_requests/create_service_job_screen.dart';
+import 'package:servicex_client_app/presentation/screens/service_provider_profile/service_provider_profile_screen.dart';
 import 'package:servicex_client_app/presentation/screens/profile/all_favourites_screen.dart';
 import 'package:servicex_client_app/presentation/screens/profile/payment_cards_screen.dart';
 import 'package:servicex_client_app/presentation/screens/profile/saved_locations_screen.dart';
@@ -18,8 +18,8 @@ import 'package:servicex_client_app/presentation/widgets/simple_heading.dart';
 import 'package:servicex_client_app/utils/constants/colors.dart';
 import 'package:servicex_client_app/utils/constants/images.dart';
 
-class VipeepProfileScreen extends StatelessWidget {
-  const VipeepProfileScreen({super.key});
+class VipeepProfileTab extends StatelessWidget {
+  const VipeepProfileTab({super.key});
 
   @override
   Widget build(BuildContext context) {

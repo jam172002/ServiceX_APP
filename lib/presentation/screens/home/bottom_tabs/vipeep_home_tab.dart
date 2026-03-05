@@ -7,12 +7,12 @@ import 'package:servicex_client_app/presentation/widgets/location_bottom_sheet.d
 import 'package:servicex_client_app/presentation/widgets/map_view_container.dart';
 import 'package:servicex_client_app/presentation/widgets/simple_heading.dart';
 import 'package:servicex_client_app/presentation/controllers/location_controller.dart';
-import 'package:servicex_client_app/presentation/screens/home/all_catagories_screen.dart';
-import 'package:servicex_client_app/presentation/screens/home/create_service_job_screen.dart';
+import 'package:servicex_client_app/presentation/screens/categories_n_subcategories/all_catagories_screen.dart';
+import 'package:servicex_client_app/presentation/screens/service_requests/create_service_job_screen.dart';
 import 'package:servicex_client_app/presentation/screens/home/notifications_screen.dart';
 import 'package:servicex_client_app/presentation/screens/home/search_screen.dart';
-import 'package:servicex_client_app/presentation/screens/home/service_provider_profile_screen.dart';
-import 'package:servicex_client_app/presentation/screens/home/subcatagory_service_providers_screen.dart';
+import 'package:servicex_client_app/presentation/screens/service_provider_profile/service_provider_profile_screen.dart';
+import 'package:servicex_client_app/presentation/screens/categories_n_subcategories/subcatagory_service_providers_screen.dart';
 import 'package:servicex_client_app/presentation/widgets/category_listview.dart';
 import 'package:servicex_client_app/presentation/widgets/populars_hor_listview.dart';
 import 'package:servicex_client_app/presentation/widgets/service_providers_hor_view.dart';
@@ -20,9 +20,9 @@ import 'package:servicex_client_app/presentation/screens/profile/settings_screen
 import 'package:servicex_client_app/utils/constants/colors.dart';
 import 'package:servicex_client_app/utils/constants/images.dart';
 
-import '../../../domain/models/location_model.dart';
-import '../../controllers/auth_controller.dart';
-import '../location/location_selector_screen.dart';
+import '../../../../domain/models/location_model.dart';
+import '../../../controllers/auth_controller.dart';
+import '../../location/location_selector_screen.dart';
 
 class VipeepHomeScreen extends StatefulWidget {
   const VipeepHomeScreen({super.key});

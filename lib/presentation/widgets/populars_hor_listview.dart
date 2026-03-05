@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:servicex_client_app/presentation/screens/home/subcatagory_service_providers_screen.dart';
+import 'package:servicex_client_app/presentation/screens/categories_n_subcategories/subcatagory_service_providers_screen.dart';
 import 'package:servicex_client_app/presentation/widgets/popular_home_item_card.dart';
 import 'package:servicex_client_app/utils/constants/images.dart';
 

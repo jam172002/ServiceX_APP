@@ -3,8 +3,8 @@ import 'package:get/get.dart';
 import 'package:iconsax/iconsax.dart';
 import 'package:servicex_client_app/presentation/widgets/common_appbar.dart';
 import 'package:servicex_client_app/presentation/widgets/reject_offer_dialog.dart';
-import 'package:servicex_client_app/presentation/screens/home/create_service_job_screen.dart';
-import 'package:servicex_client_app/presentation/screens/home/service_provider_profile_screen.dart';
+import 'package:servicex_client_app/presentation/screens/service_requests/create_service_job_screen.dart';
+import 'package:servicex_client_app/presentation/screens/service_provider_profile/service_provider_profile_screen.dart';
 import 'package:servicex_client_app/presentation/screens/service_requests/check_offers_screen.dart';
 import 'package:servicex_client_app/presentation/widgets/request_details_screen_photos_list.dart';
 import 'package:servicex_client_app/utils/constants/colors.dart';
@@ -19,7 +19,8 @@ class RequestDetailScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     // change this value to test different statuses
     final String status =
-        "cancelled_by_sp"; // e.g. new, under_review, accepted, booked, rebooked, pending, inprogress, completed, cancelled_by_me, cancelled_by_sp
+        "new"
+        ; // e.g. new, under_review, accepted, booked, rebooked, pending, inprogress, completed, cancelled_by_me, cancelled_by_sp
 
     Widget logicalDivider() => Column(
       children: [

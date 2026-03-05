@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:servicex_client_app/presentation/widgets/common_appbar.dart';
-import 'package:servicex_client_app/presentation/screens/home/service_provider_profile_screen.dart';
+import 'package:servicex_client_app/presentation/screens/service_provider_profile/service_provider_profile_screen.dart';
 import 'package:servicex_client_app/presentation/widgets/service_provider_screen_card.dart';
 
 class AllFavouritesScreen extends StatelessWidget {

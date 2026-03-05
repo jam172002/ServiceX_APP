@@ -3,7 +3,7 @@ import 'package:get/get.dart';
 import 'package:servicex_client_app/domain/models/service_category.dart';
 import 'package:servicex_client_app/presentation/widgets/category_shimmer.dart';
 import 'package:servicex_client_app/presentation/widgets/single_category.dart';
-import 'package:servicex_client_app/presentation/screens/home/subcategories_screen.dart';
+import 'package:servicex_client_app/presentation/screens/categories_n_subcategories/all_subcategories_screen.dart';
 
 class CategoryGrid extends StatelessWidget {
   final List<ServiceCategory> categories;

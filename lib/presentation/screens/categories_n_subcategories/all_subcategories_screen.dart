@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:servicex_client_app/presentation/widgets/common_appbar.dart';
 import 'package:servicex_client_app/presentation/widgets/search_filter_container.dart';
-import 'package:servicex_client_app/presentation/screens/home/service_provider_profile_screen.dart';
-import 'package:servicex_client_app/presentation/screens/home/subcatagory_service_providers_screen.dart';
+import 'package:servicex_client_app/presentation/screens/service_provider_profile/service_provider_profile_screen.dart';
+import 'package:servicex_client_app/presentation/screens/categories_n_subcategories/subcatagory_service_providers_screen.dart';
 import 'package:servicex_client_app/presentation/widgets/single_subcatagory.dart';
 import 'package:servicex_client_app/utils/constants/images.dart';
 
