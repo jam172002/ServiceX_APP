@@ -5,6 +5,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:servicex_client_app/app.dart';
 import 'package:servicex_client_app/app_bindings.dart';
 import 'package:servicex_client_app/presentation/screens/splash/splash_router.dart';
+import 'package:servicex_client_app/services/chat_notification_service.dart';
 
 import 'firebase_options.dart';
 
@@ -12,9 +13,14 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   await GetStorage.init();
+
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
+
+  // Init push notification service (permissions + local channel + FCM listeners)
+  await ChatNotificationService.instance.init();
+
   AppBindings().dependencies();
 
   runApp(const MyApp(initialScreen: SplashRouter()));

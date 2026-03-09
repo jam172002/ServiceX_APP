@@ -22,6 +22,7 @@ class FixerModel {
   final String address;
   final DateTime createdAt;
   final DateTime updatedAt;
+  final String? fcmToken; // <-- promoted from stub getter to real field
 
   FixerModel({
     required this.uid,
@@ -45,6 +46,7 @@ class FixerModel {
     required this.address,
     required this.createdAt,
     required this.updatedAt,
+    this.fcmToken, // nullable — absent in old documents is fine
   });
 
   factory FixerModel.fromDoc(DocumentSnapshot<Map<String, dynamic>> doc) {
@@ -72,6 +74,7 @@ class FixerModel {
       address: (location['address'] ?? '') as String,
       createdAt: _toDate(d['createdAt']),
       updatedAt: _toDate(d['updatedAt']),
+      fcmToken: d['fcmToken'] as String?, // null-safe — missing field → null
     );
   }
 

@@ -11,6 +11,9 @@ import 'package:servicex_client_app/presentation/widgets/service_provider_profil
 import 'package:servicex_client_app/presentation/screens/chat/single_chat_screen.dart';
 import 'package:servicex_client_app/utils/constants/colors.dart';
 
+import '../../../services/chat_notification_service.dart';
+import '../chat/controller/chat_controller.dart';
+
 class ServiceProviderProfileScreen extends StatefulWidget {
   const ServiceProviderProfileScreen({super.key});
 
@@ -21,25 +24,24 @@ class ServiceProviderProfileScreen extends StatefulWidget {
 
 class _ServiceProviderProfileScreenState
     extends State<ServiceProviderProfileScreen> {
-  // Read fixer from Get.arguments — null-safe, falls back to dummy data
-  FixerModel? get fixer => Get.arguments is FixerModel ? Get.arguments as FixerModel : null;
+  FixerModel? get fixer =>
+      Get.arguments is FixerModel ? Get.arguments as FixerModel : null;
 
   final ScrollController _scrollController = ScrollController();
   bool _isFabVisible = true;
   double _lastOffset = 0;
   bool isFavourite = false;
+  bool _isChatLoading = false;
 
-  // Resolved subcategory names (IDs → names via Firestore)
   List<String> _subcategoryNames = [];
-  // Resolved main category name
   String _categoryName = '';
+
+  // ── Firestore name resolution ──────────────────────────────────
 
   Future<void> _resolveNames(FixerModel f) async {
     try {
-      // Fetch category name + all subcategory names in parallel
       final futures = <Future>[];
 
-      // Category
       futures.add(
         FirebaseFirestore.instance
             .collection('service_categories')
@@ -48,12 +50,12 @@ class _ServiceProviderProfileScreenState
             .then((doc) {
           if (doc.exists && mounted) {
             setState(() =>
-            _categoryName = (doc.data()?['name'] ?? f.mainCategory) as String);
+            _categoryName =
+            (doc.data()?['name'] ?? f.mainCategory) as String);
           }
         }),
       );
 
-      // Subcategories
       if (f.subCategories.isNotEmpty) {
         futures.add(
           Future.wait(
@@ -72,27 +74,86 @@ class _ServiceProviderProfileScreenState
       }
 
       await Future.wait(futures);
-    } catch (_) {
-      // silent fallback — IDs remain visible
-    }
+    } catch (_) {}
   }
+
+  // ── Favourite toggle ───────────────────────────────────────────
 
   void toggleFavourite() {
     setState(() => isFavourite = !isFavourite);
     Get.dialog(
       SimpleDialogWidget(
-        message: isFavourite ? 'Added to Favourites' : 'Removed from Favourites',
+        message:
+        isFavourite ? 'Added to Favourites' : 'Removed from Favourites',
         icon: isFavourite ? Icons.favorite : Icons.favorite_border,
         iconColor: Colors.redAccent,
       ),
     );
   }
 
+  // ── Open chat ──────────────────────────────────────────────────
+
+  Future<void> _openChat() async {
+    final f = fixer;
+
+    debugPrint('▶ fixer=${f?.uid} name=${f?.fullName}');
+    debugPrint('▶ arguments=${Get.arguments?.runtimeType}');
+
+    if (f == null || f.uid.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Provider info not available')),
+      );
+      return;
+    }
+
+    setState(() => _isChatLoading = true);
+
+    try {
+      if (!Get.isRegistered<ChatController>()) {
+        Get.put(ChatController());
+      }
+
+      final ctrl = Get.find<ChatController>();
+      final myToken = await ChatNotificationService.instance.getToken();
+
+      await ctrl.openChat(
+        otherId: f.uid,
+        otherName: f.fullName,
+        otherAvatar: f.profileImageUrl,
+        otherFcmToken: f.fcmToken,
+        myFcmToken: myToken,
+      );
+
+      if (!mounted) return;
+
+      Get.to(() => SingleChatScreen(
+        conversationId: ctrl.activeConversationId.value,
+        otherUserId: f.uid,
+        otherUserName: f.fullName,
+        otherUserAvatar: f.profileImageUrl,
+        isServiceProvider: false,
+      ));
+    } catch (e, stack) {
+      debugPrint('▶ CHAT ERROR: $e');
+      debugPrint('▶ STACK: $stack');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('$e')),  // shows actual error message
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isChatLoading = false);
+    }
+  }
+
+  // ── Lifecycle ──────────────────────────────────────────────────
+
   @override
   void initState() {
     super.initState();
     final f = fixer;
     if (f != null) _resolveNames(f);
+
     const double sensitivity = 8;
     _scrollController.addListener(() {
       final offset = _scrollController.position.pixels;
@@ -112,6 +173,8 @@ class _ServiceProviderProfileScreenState
     super.dispose();
   }
 
+  // ── Build ──────────────────────────────────────────────────────
+
   @override
   Widget build(BuildContext context) {
     final f = fixer;
@@ -123,7 +186,6 @@ class _ServiceProviderProfileScreenState
             controller: _scrollController,
             child: Column(
               children: [
-                // Header — real banner/avatar/name/location from FixerModel
                 ServiceProviderProfileHeader(
                   bannerUrl: f?.bannerImageUrl,
                   avatarUrl: f?.profileImageUrl,
@@ -161,9 +223,11 @@ class _ServiceProviderProfileScreenState
                                   fontWeight: FontWeight.w300),
                             ),
                             const SizedBox(width: 12),
-                            Container(height: 10, width: 1.5, color: XColors.primary),
+                            Container(
+                                height: 10,
+                                width: 1.5,
+                                color: XColors.primary),
                             const SizedBox(width: 12),
-                            // Resolved category name (falls back to ID while loading)
                             Text(
                               _categoryName.isNotEmpty
                                   ? _categoryName
@@ -175,7 +239,10 @@ class _ServiceProviderProfileScreenState
                             ),
                             if (f != null && f.yearsOfExperience > 0) ...[
                               const SizedBox(width: 12),
-                              Container(height: 10, width: 1.5, color: XColors.primary),
+                              Container(
+                                  height: 10,
+                                  width: 1.5,
+                                  color: XColors.primary),
                               const SizedBox(width: 12),
                               Text(
                                 '${f.yearsOfExperience} ${f.yearsOfExperience == 1 ? 'Year' : 'Years'} of Experience',
@@ -199,20 +266,17 @@ class _ServiceProviderProfileScreenState
                                   .map((day) {
                                 final isAvailable = f.availableDays.any(
                                       (d) => d.toLowerCase().startsWith(
-                                    day.toLowerCase().substring(0, 3),
-                                  ),
+                                      day.toLowerCase().substring(0, 3)),
                                 );
                                 return WorkingDayContainer(
                                   day: day,
-                                  backgroundColor: isAvailable
-                                      ? Colors.green
-                                      : Colors.black54,
+                                  backgroundColor:
+                                  isAvailable ? Colors.green : Colors.black54,
                                 );
                               }),
                             ],
                           )
                         else
-                        // Fallback when no fixer data
                           Wrap(
                             spacing: 8,
                             children: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri']
@@ -269,7 +333,7 @@ class _ServiceProviderProfileScreenState
                             title: 'Specializes',
                             items: _subcategoryNames.isNotEmpty
                                 ? _subcategoryNames
-                                : f.subCategories, // fallback to IDs while loading
+                                : f.subCategories,
                           ),
 
                         const SizedBox(height: 20),
@@ -284,7 +348,7 @@ class _ServiceProviderProfileScreenState
             ),
           ),
 
-          // ── Back + Favourite ────────────────────────────────────
+          // ── Back + Favourite ──────────────────────────────────
           Positioned(
             top: kToolbarHeight,
             left: 16,
@@ -314,7 +378,8 @@ class _ServiceProviderProfileScreenState
                     ),
                     child: Icon(
                       isFavourite ? Icons.favorite : Iconsax.heart,
-                      color: isFavourite ? Colors.redAccent : Colors.black87,
+                      color:
+                      isFavourite ? Colors.redAccent : Colors.black87,
                       size: 20,
                     ),
                   ),
@@ -325,6 +390,7 @@ class _ServiceProviderProfileScreenState
         ],
       ),
 
+      // ── Chat FAB ───────────────────────────────────────────────
       floatingActionButton: AnimatedSlide(
         duration: const Duration(milliseconds: 220),
         offset: _isFabVisible ? Offset.zero : const Offset(0, 2),
@@ -335,9 +401,17 @@ class _ServiceProviderProfileScreenState
             backgroundColor: XColors.primary,
             shape: const OvalBorder(),
             elevation: 0,
-            onPressed: () =>
-                Get.to(() => SingleChatScreen(isServiceProvider: false)),
-            child: const Icon(Iconsax.sms5, color: Colors.white),
+            onPressed: _isChatLoading ? null : _openChat,
+            child: _isChatLoading
+                ? const SizedBox(
+              width: 22,
+              height: 22,
+              child: CircularProgressIndicator(
+                color: Colors.white,
+                strokeWidth: 2.5,
+              ),
+            )
+                : const Icon(Iconsax.sms5, color: Colors.white),
           ),
         ),
       ),
@@ -347,6 +421,7 @@ class _ServiceProviderProfileScreenState
 }
 
 // ── WorkingDayContainer ───────────────────────────────────────────
+
 class WorkingDayContainer extends StatelessWidget {
   final String day;
   final Color backgroundColor;

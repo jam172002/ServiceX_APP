@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:iconsax/iconsax.dart';
@@ -9,6 +10,10 @@ class CustomChatAppBar extends StatelessWidget implements PreferredSizeWidget {
   final String country;
   final String? imagePath;
 
+  /// Set to [true] when [imagePath] is an https:// URL (Firebase Storage / CDN).
+  /// Defaults to [false] (asset path behaviour, same as before).
+  final bool isNetworkImage;
+
   final VoidCallback onMoreTap;
   final VoidCallback? onLocationTap;
   final VoidCallback? onProfileTap;
@@ -19,6 +24,7 @@ class CustomChatAppBar extends StatelessWidget implements PreferredSizeWidget {
     required this.location,
     required this.country,
     this.imagePath,
+    this.isNetworkImage = false,
     required this.onMoreTap,
     this.onLocationTap,
     this.onProfileTap,
@@ -27,11 +33,7 @@ class CustomChatAppBar extends StatelessWidget implements PreferredSizeWidget {
   @override
   Size get preferredSize => const Size.fromHeight(95);
 
-  bool isValidAsset(String? path) {
-    if (path == null) return false;
-    if (path.trim().isEmpty) return false;
-    return true;
-  }
+  bool get _hasImage => imagePath != null && imagePath!.trim().isNotEmpty;
 
   @override
   Widget build(BuildContext context) {
@@ -45,25 +47,22 @@ class CustomChatAppBar extends StatelessWidget implements PreferredSizeWidget {
         ),
         child: Row(
           children: [
-            // ---------------- PROFILE IMAGE / FALLBACK ----------------
+            // ── Profile image ──────────────────────────────────────
             GestureDetector(
               onTap: onProfileTap,
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(12),
-                child: isValidAsset(imagePath)
-                    ? Image.asset(
-                        imagePath!,
-                        height: 50,
-                        width: 50,
-                        fit: BoxFit.cover,
-                      )
+                child: _hasImage
+                    ? (isNetworkImage
+                    ? _networkImage()
+                    : _assetImage())
                     : _defaultProfileBox(),
               ),
             ),
 
             const SizedBox(width: 12),
 
-            // ---------------- NAME + LOCATION ----------------
+            // ── Name + location ────────────────────────────────────
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -79,41 +78,43 @@ class CustomChatAppBar extends StatelessWidget implements PreferredSizeWidget {
                       fontWeight: FontWeight.w600,
                     ),
                   ),
-                  SizedBox(height: 4),
-                  GestureDetector(
-                    onTap: onLocationTap,
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        const Icon(
-                          Iconsax.location5,
-                          color: Colors.white,
-                          size: 15,
-                        ),
-                        const SizedBox(width: 4),
-
-                        // Location Text
-                        Flexible(
-                          child: Text(
-                            "$location, $country",
-                            style: const TextStyle(
-                              color: Colors.white70,
-                              fontSize: 11,
-                            ),
-                            overflow: TextOverflow.ellipsis,
-                            maxLines: 1,
+                  const SizedBox(height: 4),
+                  // Only show location row when there is content
+                  if (location.isNotEmpty || country.isNotEmpty)
+                    GestureDetector(
+                      onTap: onLocationTap,
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          const Icon(
+                            Iconsax.location5,
+                            color: Colors.white,
+                            size: 15,
                           ),
-                        ),
-                      ],
+                          const SizedBox(width: 4),
+                          Flexible(
+                            child: Text(
+                              [location, country]
+                                  .where((s) => s.isNotEmpty)
+                                  .join(', '),
+                              style: const TextStyle(
+                                color: Colors.white70,
+                                fontSize: 11,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                              maxLines: 1,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
                 ],
               ),
             ),
-            SizedBox(width: 8),
-            // ---------------- Delete Icon ----------------
 
-            //? More
+            const SizedBox(width: 8),
+
+            // ── More / ellipsis ────────────────────────────────────
             GestureDetector(
               onTap: onMoreTap,
               child: const Icon(
@@ -128,17 +129,42 @@ class CustomChatAppBar extends StatelessWidget implements PreferredSizeWidget {
     );
   }
 
-  // ---------------- DEFAULT PROFILE BOX ----------------
-  Widget _defaultProfileBox() {
-    return Container(
-      height: 50,
-      width: 50,
-      decoration: BoxDecoration(
-        color: XColors.primaryBG.withValues(alpha: 0.9),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      alignment: Alignment.center,
-      child: const Icon(Iconsax.user, color: Colors.black54, size: 26),
-    );
-  }
+  // ── Image variants ─────────────────────────────────────────────
+
+  Widget _assetImage() => Image.asset(
+    imagePath!,
+    height: 50,
+    width: 50,
+    fit: BoxFit.cover,
+    errorBuilder: (_, __, ___) => _defaultProfileBox(),
+  );
+
+  Widget _networkImage() => CachedNetworkImage(
+    imageUrl: imagePath!,
+    height: 50,
+    width: 50,
+    fit: BoxFit.cover,
+    placeholder: (_, __) => _shimmerBox(),
+    errorWidget: (_, __, ___) => _defaultProfileBox(),
+  );
+
+  Widget _shimmerBox() => Container(
+    height: 50,
+    width: 50,
+    decoration: BoxDecoration(
+      color: Colors.white24,
+      borderRadius: BorderRadius.circular(12),
+    ),
+  );
+
+  Widget _defaultProfileBox() => Container(
+    height: 50,
+    width: 50,
+    decoration: BoxDecoration(
+      color: XColors.primaryBG.withValues(alpha: 0.9),
+      borderRadius: BorderRadius.circular(12),
+    ),
+    alignment: Alignment.center,
+    child: const Icon(Iconsax.user, color: Colors.black54, size: 26),
+  );
 }

@@ -10,6 +10,7 @@ import 'package:servicex_client_app/presentation/screens/authentication/controll
 import 'package:servicex_client_app/presentation/screens/categories_n_subcategories/controller/category_controller.dart';
 import 'package:servicex_client_app/presentation/controllers/location_controller.dart';
 import 'package:servicex_client_app/presentation/controllers/x_search_controller.dart';
+import 'package:servicex_client_app/presentation/screens/chat/controller/chat_controller.dart';
 import 'package:servicex_client_app/presentation/screens/profile/controller/user_profile_controller.dart';
 
 class AppBindings extends Bindings {
@@ -51,6 +52,13 @@ class AppBindings extends Bindings {
         userRepo: Get.find<UserRepository>(),
         walletRepo: Get.find<WalletRepository>(),
       ),
+      permanent: true,
+    );
+
+    // ── Chat ───────────────────────────────────────────────────────────────
+    // permanent: true so it survives screen navigation and is always findable
+    Get.put<ChatController>(
+      ChatController(),
       permanent: true,
     );
   }
