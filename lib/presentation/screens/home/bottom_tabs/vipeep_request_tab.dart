@@ -107,8 +107,7 @@ class VipeepRequestTab extends StatelessWidget {
                         onTap: () => Get.to(
                               () => RequestDetailScreen(
                             isRequestDetailScreen: true,
-                            // Pass job id so detail screen can load data
-                            // jobId: job.id,
+                            jobId: job.id,
                           ),
                         ),
                       );

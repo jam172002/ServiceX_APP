@@ -34,8 +34,10 @@ class BookingScreenCard extends StatelessWidget {
     final width = XHelperFunctions.screenWidth();
 
     return GestureDetector(
-      onTap: () =>
-          Get.to(() => RequestDetailScreen(isRequestDetailScreen: false)),
+      onTap: () => Get.to(() => RequestDetailScreen(
+        isRequestDetailScreen: false,
+        jobId: data['jobId'] as String? ?? '',
+      )),
       child: Container(
         margin: const EdgeInsets.only(bottom: 16),
         padding: const EdgeInsets.all(16),

@@ -18,7 +18,7 @@
     <uses-permission android:name="android.permission.INTERNET" />
 
     <application
-        android:label="servicex_client_app"
+        android:label="ViPeeps"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
 

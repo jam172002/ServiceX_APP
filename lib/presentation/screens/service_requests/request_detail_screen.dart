@@ -1,108 +1,136 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:iconsax/iconsax.dart';
+import 'package:servicex_client_app/domain/models/job_request_model.dart';
+import 'package:servicex_client_app/presentation/screens/service_requests/controller/job_detail_controller.dart';
 import 'package:servicex_client_app/presentation/widgets/common_appbar.dart';
 import 'package:servicex_client_app/presentation/widgets/reject_offer_dialog.dart';
 import 'package:servicex_client_app/presentation/screens/service_requests/create_service_job_screen.dart';
 import 'package:servicex_client_app/presentation/screens/service_provider_profile/service_provider_profile_screen.dart';
 import 'package:servicex_client_app/presentation/screens/service_requests/check_offers_screen.dart';
-import 'package:servicex_client_app/presentation/widgets/request_details_screen_photos_list.dart';
 import 'package:servicex_client_app/utils/constants/colors.dart';
-import 'package:servicex_client_app/utils/constants/images.dart';
 
 class RequestDetailScreen extends StatelessWidget {
   final bool isRequestDetailScreen;
+  final String jobId;
 
-  const RequestDetailScreen({super.key, required this.isRequestDetailScreen});
+  const RequestDetailScreen({
+    super.key,
+    required this.isRequestDetailScreen,
+    required this.jobId,
+  });
 
   @override
   Widget build(BuildContext context) {
-    // change this value to test different statuses
-    final String status =
-        "new"
-        ; // e.g. new, under_review, accepted, booked, rebooked, pending, inprogress, completed, cancelled_by_me, cancelled_by_sp
-
-    Widget logicalDivider() => Column(
-      children: [
-        SizedBox(height: 6),
-        Divider(color: XColors.borderColor.withValues(alpha: 0.3), height: 0.2),
-        SizedBox(height: 6),
-      ],
+    final controller = Get.put(
+      JobDetailController(jobId: jobId),
+      tag: jobId, // unique tag so multiple detail screens don't clash
     );
 
-    // UI status text mapping (shows specific status names in UI)
-    String getStatusText(String status) {
-      switch (status) {
-        case "new":
-          return "New";
-        case "under_review":
-          return "Under Review";
-        case "accepted":
-          return "Accepted";
-        case "booked":
-          return "Booked";
-        case "rebooked":
-          return "Rebooked";
-        case "pending":
-          return "Pending";
-        case "inprogress":
-          return "In Progress";
-        case "completed":
-          return "Completed";
-        case "cancelled_by_me":
-        case "cancelled_by_sp":
-          return "Cancelled";
-        default:
-          return "";
+    return Obx(() {
+      // ── Loading ────────────────────────────────────────────────────
+      if (controller.isLoading.value) {
+        return Scaffold(
+          appBar: XAppBar(
+            title: isRequestDetailScreen
+                ? 'Request Details'
+                : 'Booking Details',
+          ),
+          body: const Center(child: CircularProgressIndicator()),
+        );
       }
-    }
 
-    // Status color mapping
-    Color getStatusColor(String status) {
-      switch (status) {
-        case "new":
-          return Colors.blue;
-        case "under_review":
-          return Colors.orange;
-        case "accepted":
-        case "booked":
-        case "rebooked":
-          return Colors.green;
-        case "pending":
-          return Colors.orange;
-        case "inprogress":
-          return Colors.purple;
-        case "completed":
-          return Colors.teal;
-        case "cancelled_by_me":
-        case "cancelled_by_sp":
-          return Colors.red;
-        default:
-          return Colors.grey;
+      // ── Error ──────────────────────────────────────────────────────
+      if (controller.error.value.isNotEmpty) {
+        return Scaffold(
+          appBar: XAppBar(title: 'Error'),
+          body: Center(child: Text(controller.error.value)),
+        );
       }
-    }
 
-    // Backend mapping: map accepted/booked/rebooked -> "confirmed"
-    // ignore: unused_element
-    String getBackendStatus(String status) {
-      if (["accepted", "booked", "rebooked"].contains(status)) {
-        return "confirmed";
+      // ── Not found ──────────────────────────────────────────────────
+      final job = controller.job.value;
+      if (job == null) {
+        return Scaffold(
+          appBar: XAppBar(title: 'Not Found'),
+          body: const Center(child: Text('Job request not found.')),
+        );
       }
-      return status;
+
+      return _DetailBody(
+        controller: controller,
+        job: job,
+        isRequestDetailScreen: isRequestDetailScreen,
+      );
+    });
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// The actual detail body — extracted to keep build() clean
+// ─────────────────────────────────────────────────────────────────────────────
+class _DetailBody extends StatelessWidget {
+  final JobDetailController controller;
+  final JobRequestModel job;
+  final bool isRequestDetailScreen;
+
+  const _DetailBody({
+    required this.controller,
+    required this.job,
+    required this.isRequestDetailScreen,
+  });
+
+  // Map JobStatus → internal key the UI uses
+  String get _statusKey => JobDetailController.statusKey(job.status);
+
+  bool _isConfirmed() =>
+      ['accepted', 'booked', 'rebooked'].contains(_statusKey);
+
+  bool _showCancelButton() => [
+    'pending',
+    'new',
+    'under_review',
+    'inprogress',
+    'accepted',
+    'booked',
+    'rebooked',
+  ].contains(_statusKey);
+
+  Color _statusColor(String key) {
+    switch (key) {
+      case 'new':            return Colors.blue;
+      case 'under_review':   return Colors.orange;
+      case 'accepted':
+      case 'booked':
+      case 'rebooked':       return Colors.green;
+      case 'pending':        return Colors.orange;
+      case 'inprogress':     return Colors.purple;
+      case 'completed':      return Colors.teal;
+      case 'cancelled_by_me':
+      case 'cancelled_by_sp':return Colors.red;
+      default:               return Colors.grey;
     }
+  }
 
-    // Helper checks
-    bool isConfirmed() => ["accepted", "booked", "rebooked"].contains(status);
+  Widget _divider() => const Column(
+    children: [
+      SizedBox(height: 6),
+      Divider(color: Color(0x4D9E9E9E), height: 0.2),
+      SizedBox(height: 6),
+    ],
+  );
 
-    bool showCancelButton() => [
-      "pending",
-      "new",
-      "under_review",
-      "inprogress",
-      "accepted",
-      "booked",
-      "rebooked",
-    ].contains(status);
+  Widget _sectionDivider() => Column(children: [
+    const SizedBox(height: 12),
+    Divider(color: XColors.borderColor.withValues(alpha: 0.3), height: 0.2),
+    const SizedBox(height: 12),
+  ]);
+
+  @override
+  Widget build(BuildContext context) {
+    final statusKey = _statusKey;
+    final statusColor = _statusColor(statusKey);
+    final statusText = JobDetailController.statusText(statusKey);
 
     return Scaffold(
       appBar: XAppBar(
@@ -110,35 +138,46 @@ class RequestDetailScreen extends StatelessWidget {
       ),
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Main Sub Category image
+              // ── Hero image (first job image or placeholder) ─────────
               Container(
                 width: double.infinity,
                 height: 160,
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(8),
-                  image: DecorationImage(
-                    image: AssetImage(XImages.serviceProviderBanner),
-                    fit: BoxFit.cover,
-                  ),
+                  color: XColors.grey.withValues(alpha: 0.15),
                 ),
+                clipBehavior: Clip.antiAlias,
+                child: job.imageUrls.isNotEmpty
+                    ? Image.network(
+                  job.imageUrls.first,
+                  fit: BoxFit.cover,
+                  errorBuilder: (_, __, ___) =>
+                  const Icon(Icons.image_not_supported_outlined,
+                      size: 48, color: Colors.grey),
+                )
+                    : const Icon(Icons.image_not_supported_outlined,
+                    size: 48, color: Colors.grey),
               ),
-              SizedBox(height: 16),
+              const SizedBox(height: 16),
 
-              // Main Title & Category
+              // ── Title & category ───────────────────────────────────
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(
-                    'Wiring & Rewiring',
-                    style: TextStyle(fontSize: 17, fontWeight: FontWeight.w500),
+                  Expanded(
+                    child: Text(
+                      job.subcategoryName,
+                      style: const TextStyle(
+                          fontSize: 17, fontWeight: FontWeight.w500),
+                    ),
                   ),
                   Text(
-                    'Electrical',
-                    style: TextStyle(
+                    job.categoryName,
+                    style: const TextStyle(
                       color: XColors.primary,
                       fontSize: 13,
                       fontWeight: FontWeight.bold,
@@ -147,516 +186,246 @@ class RequestDetailScreen extends StatelessWidget {
                 ],
               ),
 
-              SizedBox(height: 12),
-              Divider(
-                color: XColors.borderColor.withValues(alpha: 0.3),
-                height: 0.2,
-              ),
-              SizedBox(height: 12),
+              _sectionDivider(),
 
-              // Description
+              // ── Description ────────────────────────────────────────
+              const Text('Description:',
+                  style: TextStyle(
+                      color: XColors.black,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500)),
               Text(
-                'Description:',
-                style: TextStyle(
-                  color: XColors.black,
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-              Text(
-                'Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem aperiam, eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt explicabo.',
+                job.details,
                 textAlign: TextAlign.justify,
-                style: TextStyle(
-                  color: XColors.grey,
-                  fontSize: 12,
-                  fontWeight: FontWeight.w300,
-                ),
+                style: const TextStyle(
+                    color: XColors.grey,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w300),
               ),
 
-              SizedBox(height: 12),
-              Divider(
-                color: XColors.borderColor.withValues(alpha: 0.3),
-                height: 0.2,
-              ),
-              SizedBox(height: 12),
+              _sectionDivider(),
 
-              // Service Provider Section (visible for confirmed/inprogress/completed/cancelled_by_sp)
-              if (isConfirmed() ||
-                  [
-                    "inprogress",
-                    "completed",
-                    "cancelled_by_sp",
-                  ].contains(status))
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Service Provider',
-                      style: TextStyle(
-                        color: XColors.black,
-                        fontSize: 14,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                    SizedBox(height: 8),
-                    Row(
-                      children: [
-                        CircleAvatar(
-                          radius: 35,
-                          backgroundImage: AssetImage(XImages.serviceProvider),
-                        ),
-                        SizedBox(width: 8),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Muhammad Sufyan',
-                              style: TextStyle(
-                                color: XColors.black,
-                                fontSize: 14,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                            Text(
-                              'Electrician',
-                              style: TextStyle(
-                                color: XColors.grey,
-                                fontSize: 12,
-                                fontWeight: FontWeight.w300,
-                              ),
-                            ),
-                          ],
-                        ),
-                        Spacer(),
-                        IconButton.filled(
-                          onPressed: () {
-                            Get.to(() => ServiceProviderProfileScreen());
-                          },
-                          icon: Icon(
-                            Iconsax.user,
-                            color: XColors.primary,
-                            size: 18,
-                          ),
-                          style: IconButton.styleFrom(
-                            backgroundColor: XColors.primary.withValues(
-                              alpha: 0.2,
-                            ),
-                          ),
-                        ),
-                        IconButton.filled(
-                          onPressed: () {},
-                          icon: Icon(
-                            Iconsax.sms,
-                            color: XColors.primary,
-                            size: 18,
-                          ),
-                          style: IconButton.styleFrom(
-                            backgroundColor: XColors.primary.withValues(
-                              alpha: 0.2,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    SizedBox(height: 12),
-                    Divider(
-                      color: XColors.borderColor.withValues(alpha: 0.3),
-                      height: 0.2,
-                    ),
-                    SizedBox(height: 12),
-                  ],
-                ),
+              // ── Service provider (only when confirmed / inProgress / completed) ──
+              if (_isConfirmed() ||
+                  ['inprogress', 'completed', 'cancelled_by_sp']
+                      .contains(statusKey))
+                _ServiceProviderSection(divider: _sectionDivider),
 
-              // STATUS SECTION
+              // ── Status badge ───────────────────────────────────────
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(
-                    'Status',
-                    style: TextStyle(
-                      color: XColors.black,
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
+                  const Text('Status',
+                      style: TextStyle(
+                          color: XColors.black,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500)),
                   Container(
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 14,
-                      vertical: 4,
-                    ),
+                        horizontal: 14, vertical: 4),
                     decoration: BoxDecoration(
-                      color: getStatusColor(status).withValues(alpha: 0.2),
+                      color: statusColor.withValues(alpha: 0.2),
                       borderRadius: BorderRadius.circular(4),
                     ),
                     child: Text(
-                      getStatusText(status),
+                      statusText,
                       style: TextStyle(
-                        fontSize: 11,
-                        color: getStatusColor(status),
-                        fontWeight: FontWeight.w600,
-                      ),
+                          fontSize: 11,
+                          color: statusColor,
+                          fontWeight: FontWeight.w600),
                     ),
                   ),
                 ],
               ),
 
-              SizedBox(height: 12),
-              Divider(
-                color: XColors.borderColor.withValues(alpha: 0.3),
-                height: 0.2,
-              ),
-              SizedBox(height: 12),
+              _sectionDivider(),
 
-              // Cancelled Section (only shows when cancelled)
-              if (["cancelled_by_me", "cancelled_by_sp"].contains(status))
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          'Cancelled By:',
-                          style: TextStyle(
-                            color: XColors.black,
-                            fontSize: 13,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                        Text(
-                          status == "cancelled_by_me"
-                              ? "You"
-                              : "Service Provider",
-                          style: TextStyle(
-                            color: XColors.grey,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ],
-                    ),
-                    SizedBox(height: 4),
-                    Text(
-                      'Reason for cancellation is natus error sit voluptatem accusantium doloremque laudantium, totam rem aperiam, eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt explicabo.',
-                      textAlign: TextAlign.justify,
-                      style: TextStyle(
-                        color: XColors.danger.withValues(alpha: 0.7),
-                        fontSize: 12,
-                      ),
-                    ),
-                    SizedBox(height: 12),
-                    Divider(
-                      color: XColors.borderColor.withValues(alpha: 0.3),
-                      height: 0.2,
-                    ),
-                    SizedBox(height: 12),
-                  ],
-                ),
+              // ── Cancellation reason ────────────────────────────────
+              if (['cancelled_by_me', 'cancelled_by_sp'].contains(statusKey))
+                _CancelledSection(
+                    statusKey: statusKey, divider: _sectionDivider),
 
-              // Payment Method
+              // ── Payment method ─────────────────────────────────────
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
+                  const Text('Payment Method',
+                      style: TextStyle(
+                          color: XColors.black,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500)),
                   Text(
-                    'Payment Method',
-                    style: TextStyle(
-                      color: XColors.black,
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                  Text(
-                    'Master Card',
-                    style: TextStyle(
-                      color: XColors.grey,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w300,
-                    ),
+                    job.paymentMethod,
+                    style: const TextStyle(
+                        color: XColors.grey,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w300),
                   ),
                 ],
               ),
 
-              SizedBox(height: 12),
-              Divider(
-                color: XColors.borderColor.withValues(alpha: 0.3),
-                height: 0.2,
-              ),
-              SizedBox(height: 12),
+              _sectionDivider(),
 
-              // Location
+              // ── Location ───────────────────────────────────────────
               Row(
                 children: [
-                  Icon(Iconsax.location, color: XColors.primary, size: 18),
-                  SizedBox(width: 8),
-                  Text(
-                    'Model Town, Bahawalpur',
-                    style: TextStyle(
-                      color: XColors.grey,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w300,
+                  const Icon(Iconsax.location,
+                      color: XColors.primary, size: 18),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      job.address.isNotEmpty ? job.address : 'Not specified',
+                      style: const TextStyle(
+                          color: XColors.grey,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w300),
                     ),
                   ),
                 ],
               ),
+              const SizedBox(height: 8),
 
-              SizedBox(height: 8),
-
-              // Date
+              // ── Scheduled date & time ──────────────────────────────
               Row(
                 children: [
-                  Icon(Iconsax.calendar_1, color: XColors.primary, size: 18),
-                  SizedBox(width: 8),
+                  const Icon(Iconsax.calendar_1,
+                      color: XColors.primary, size: 18),
+                  const SizedBox(width: 8),
                   Text(
-                    'November 27, 2025 / 11:00 AM',
-                    style: TextStyle(
-                      color: XColors.grey,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w300,
-                    ),
+                    '${JobDetailController.formatDate(job.scheduledAt)} / ${JobDetailController.formatTime(job.scheduledAt)}',
+                    style: const TextStyle(
+                        color: XColors.grey,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w300),
                   ),
                 ],
               ),
 
-              SizedBox(height: 8),
-
-              // Estimated Time (shows only when confirmed/inprogress/completed)
-              if (isConfirmed() || ["inprogress", "completed"].contains(status))
-                Row(
+              if (_isConfirmed() ||
+                  ['inprogress', 'completed'].contains(statusKey)) ...[
+                const SizedBox(height: 8),
+                const Row(
                   children: [
                     Icon(Iconsax.clock, color: XColors.primary, size: 18),
                     SizedBox(width: 8),
                     Text(
-                      'Estimated Time 3 hours',
+                      'Estimated Time: TBD',
                       style: TextStyle(
-                        color: XColors.grey,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w300,
-                      ),
+                          color: XColors.grey,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w300),
                     ),
                   ],
                 ),
+              ],
 
-              SizedBox(height: 12),
-              Divider(
-                color: XColors.borderColor.withValues(alpha: 0.3),
-                height: 0.2,
-              ),
-              SizedBox(height: 12),
+              _sectionDivider(),
 
-              // Photos
-              Text(
-                'Photos',
-                style: TextStyle(
-                  color: XColors.black,
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-              SizedBox(height: 8),
-              RequestPhotoList(),
-
-              SizedBox(height: 12),
-              Divider(
-                color: XColors.borderColor.withValues(alpha: 0.3),
-                height: 0.2,
-              ),
-              SizedBox(height: 12),
-
-              // PRICE DETAILS — original logic preserved
-              Text(
-                'Price Details',
-                style: TextStyle(
-                  color: XColors.black,
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-              SizedBox(height: 8),
-
-              Container(
-                width: double.infinity,
-                padding: EdgeInsets.symmetric(horizontal: 12, vertical: 16),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(8),
-                  color: XColors.lightTint.withValues(alpha: 0.5),
-                ),
-                child: Column(
-                  children: [
-                    // BUDGET (for new, under_review, cancelled_by_me)
-                    if ([
-                      "new",
-                      "under_review",
-                      "cancelled_by_me",
-                    ].contains(status))
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            'Budget',
-                            style: TextStyle(
-                              color: XColors.black,
-                              fontSize: 13,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                          Text(
-                            '\$50 - \$150',
-                            style: TextStyle(
-                              color: XColors.grey,
-                              fontSize: 12,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ],
+              // ── Photos ─────────────────────────────────────────────
+              const Text('Photos',
+                  style: TextStyle(
+                      color: XColors.black,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500)),
+              const SizedBox(height: 8),
+              job.imageUrls.isEmpty
+                  ? const Text('No photos attached.',
+                  style: TextStyle(color: XColors.grey, fontSize: 12))
+                  : SizedBox(
+                height: 90,
+                child: ListView.separated(
+                  scrollDirection: Axis.horizontal,
+                  itemCount: job.imageUrls.length,
+                  separatorBuilder: (_, __) =>
+                  const SizedBox(width: 8),
+                  itemBuilder: (_, i) => ClipRRect(
+                    borderRadius: BorderRadius.circular(6),
+                    child: Image.network(
+                      job.imageUrls[i],
+                      width: 90,
+                      height: 90,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) => Container(
+                        width: 90,
+                        height: 90,
+                        color: Colors.grey.shade200,
+                        child: const Icon(
+                            Icons.broken_image_outlined,
+                            color: Colors.grey),
                       ),
-
-                    // PRICE (for confirmed, inprogress, completed, cancelled_by_sp)
-                    if (isConfirmed() ||
-                        status == "inprogress" ||
-                        status == "completed" ||
-                        status == "cancelled_by_sp") ...[
-                      if (![
-                        "new",
-                        "under_review",
-                        "cancelled_by_me",
-                        "completed",
-                        "pending",
-                      ].contains(status))
-                        logicalDivider(),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            'Price',
-                            style: TextStyle(
-                              color: XColors.black,
-                              fontSize: 13,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                          Text(
-                            '\$90',
-                            style: TextStyle(
-                              color: XColors.grey,
-                              fontSize: 12,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-
-                    // COMMISSION (inprogress, completed, cancelled_by_sp)
-                    if ([
-                      "inprogress",
-                      "completed",
-                      "cancelled_by_sp",
-                    ].contains(status)) ...[
-                      logicalDivider(),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            'Commission (10%)',
-                            style: TextStyle(
-                              color: XColors.black,
-                              fontSize: 13,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                          Text(
-                            '\$20',
-                            style: TextStyle(
-                              color: XColors.grey,
-                              fontSize: 12,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-
-                    // TOTAL (completed only)
-                    if (status == "completed") ...[
-                      logicalDivider(),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            'Total',
-                            style: TextStyle(
-                              color: XColors.primary,
-                              fontSize: 14,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          Text(
-                            '\$110',
-                            style: TextStyle(
-                              color: XColors.primary,
-                              fontSize: 13,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ],
+                    ),
+                  ),
                 ),
               ),
 
-              SizedBox(height: 40),
+              _sectionDivider(),
 
-              // CANCEL BUTTON -> shown for pending, new, under_review, inprogress, and confirmed group
-              if (showCancelButton())
-                OutlinedButton.icon(
+              // ── Price details ──────────────────────────────────────
+              const Text('Price Details',
+                  style: TextStyle(
+                      color: XColors.black,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500)),
+              const SizedBox(height: 8),
+              _PriceSection(
+                job: job,
+                statusKey: statusKey,
+                isConfirmed: _isConfirmed(),
+                divider: _divider,
+              ),
+
+              const SizedBox(height: 40),
+
+              // ── Cancel button ──────────────────────────────────────
+              if (_showCancelButton())
+                Obx(() => controller.isCancelling.value
+                    ? const Center(child: CircularProgressIndicator())
+                    : OutlinedButton.icon(
                   onPressed: () => Get.dialog(
                     RejectDialog(
                       title: 'Cancel Request',
                       subtitle:
-                          'Please provide a reason for cancellation of this request.',
+                      'Please provide a reason for cancellation.',
                       hintText: 'Write your reason...',
-                      onSubmit: (String p1) {},
+                      onSubmit: (reason) =>
+                          controller.cancelJob(reason),
                     ),
                   ),
-                  icon: Icon(Icons.clear, color: XColors.danger),
+                  icon: const Icon(Icons.clear, color: XColors.danger),
                   label: const Text(
                     'Cancel Request',
                     style: TextStyle(
-                      fontWeight: FontWeight.w300,
-                      fontSize: 13,
-                      color: XColors.danger,
-                    ),
+                        fontWeight: FontWeight.w300,
+                        fontSize: 13,
+                        color: XColors.danger),
                   ),
                   style: OutlinedButton.styleFrom(
-                    minimumSize: Size.fromHeight(45),
+                    minimumSize: const Size.fromHeight(45),
                     side: const BorderSide(color: XColors.danger),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
                   ),
-                ),
+                )),
 
-              SizedBox(height: 10),
+              const SizedBox(height: 10),
 
-              // ACTION BUTTON LOGIC
-              // Hide all action buttons when status == "pending"
-              if (status != "pending") ...[
-                if (status == "new")
+              // ── Action button ──────────────────────────────────────
+              if (statusKey != 'pending') ...[
+                if (statusKey == 'new')
                   ActionBtn(
-                    text: "Check Offers",
+                    text: 'Check Offers',
                     onTap: () => Get.to(() => CheckOfferScreen()),
                   )
-                else if (status == "completed" || status == "cancelled_by_sp")
+                else if (statusKey == 'completed' ||
+                    statusKey == 'cancelled_by_sp')
                   ActionBtn(
-                    text: "Rebook",
-                    onTap: () => Get.to(
-                      () =>
-                          CreateServiceJobScreen(showServiceProviderCard: true),
-                    ),
+                    text: 'Rebook',
+                    onTap: () => Get.to(() => CreateServiceJobScreen(
+                        showServiceProviderCard: true)),
                   )
-                else if (status == "inprogress" || isConfirmed())
-                  ActionBtn(text: "Mark as Finished", onTap: () {}),
+                else if (statusKey == 'inprogress' || _isConfirmed())
+                    ActionBtn(text: 'Mark as Finished', onTap: () {}),
               ],
             ],
           ),
@@ -666,11 +435,196 @@ class RequestDetailScreen extends StatelessWidget {
   }
 }
 
-// 🔥 REUSABLE ACTION BUTTON
+// ─────────────────────────────────────────────────────────────────────────────
+// Sub-widgets
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _ServiceProviderSection extends StatelessWidget {
+  final Widget Function() divider;
+  const _ServiceProviderSection({required this.divider});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text('Service Provider',
+            style: TextStyle(
+                color: XColors.black,
+                fontSize: 14,
+                fontWeight: FontWeight.w500)),
+        const SizedBox(height: 8),
+        Row(
+          children: [
+            // Provider avatar — replace with real network image when available
+            const CircleAvatar(
+              radius: 35,
+              backgroundImage: AssetImage('assets/images/service_provider.png'),
+            ),
+            const SizedBox(width: 8),
+            const Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Assigned Provider',
+                    style: TextStyle(
+                        color: XColors.black,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500)),
+                Text('Service Professional',
+                    style: TextStyle(
+                        color: XColors.grey,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w300)),
+              ],
+            ),
+            const Spacer(),
+            IconButton.filled(
+              onPressed: () =>
+                  Get.to(() => ServiceProviderProfileScreen()),
+              icon: const Icon(Iconsax.user, color: XColors.primary, size: 18),
+              style: IconButton.styleFrom(
+                backgroundColor: XColors.primary.withValues(alpha: 0.2),
+              ),
+            ),
+            IconButton.filled(
+              onPressed: () {},
+              icon: const Icon(Iconsax.sms, color: XColors.primary, size: 18),
+              style: IconButton.styleFrom(
+                backgroundColor: XColors.primary.withValues(alpha: 0.2),
+              ),
+            ),
+          ],
+        ),
+        divider(),
+      ],
+    );
+  }
+}
+
+class _CancelledSection extends StatelessWidget {
+  final String statusKey;
+  final Widget Function() divider;
+  const _CancelledSection(
+      {required this.statusKey, required this.divider});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            const Text('Cancelled By:',
+                style: TextStyle(
+                    color: XColors.black,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500)),
+            Text(
+              statusKey == 'cancelled_by_me' ? 'You' : 'Service Provider',
+              style: const TextStyle(
+                  color: XColors.grey,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500),
+            ),
+          ],
+        ),
+        const SizedBox(height: 4),
+        Text(
+          'Cancellation reason will appear here.',
+          textAlign: TextAlign.justify,
+          style: TextStyle(
+              color: XColors.danger.withValues(alpha: 0.7), fontSize: 12),
+        ),
+        divider(),
+      ],
+    );
+  }
+}
+
+class _PriceSection extends StatelessWidget {
+  final JobRequestModel job;
+  final String statusKey;
+  final bool isConfirmed;
+  final Widget Function() divider;
+
+  const _PriceSection({
+    required this.job,
+    required this.statusKey,
+    required this.isConfirmed,
+    required this.divider,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final showBudget = ['new', 'under_review', 'cancelled_by_me', 'pending']
+        .contains(statusKey);
+    final showPrice = isConfirmed ||
+        ['inprogress', 'completed', 'cancelled_by_sp'].contains(statusKey);
+    final showCommission =
+    ['inprogress', 'completed', 'cancelled_by_sp'].contains(statusKey);
+    final showTotal = statusKey == 'completed';
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(8),
+        color: XColors.lightTint.withValues(alpha: 0.5),
+      ),
+      child: Column(
+        children: [
+          if (showBudget)
+            _row('Budget', '\$${job.budgetMin} - \$${job.budgetMax}'),
+          if (showPrice) ...[
+            if (showBudget) divider(),
+            // Actual price not on model yet — show budget max as placeholder
+            _row('Price', '\$${job.budgetMax}'),
+          ],
+          if (showCommission) ...[
+            divider(),
+            _row('Commission (10%)',
+                '\$${(job.budgetMax * 0.1).toStringAsFixed(0)}'),
+          ],
+          if (showTotal) ...[
+            divider(),
+            _row(
+              'Total',
+              '\$${(job.budgetMax * 1.1).toStringAsFixed(0)}',
+              highlight: true,
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _row(String label, String value, {bool highlight = false}) {
+    final color = highlight ? XColors.primary : XColors.black;
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(label,
+            style: TextStyle(
+                color: color,
+                fontSize: highlight ? 14 : 13,
+                fontWeight:
+                highlight ? FontWeight.bold : FontWeight.w500)),
+        Text(value,
+            style: TextStyle(
+                color: highlight ? XColors.primary : XColors.grey,
+                fontSize: highlight ? 13 : 12,
+                fontWeight:
+                highlight ? FontWeight.bold : FontWeight.w500)),
+      ],
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 class ActionBtn extends StatelessWidget {
   final String text;
   final VoidCallback onTap;
-
   const ActionBtn({super.key, required this.text, required this.onTap});
 
   @override
@@ -682,11 +636,11 @@ class ActionBtn extends StatelessWidget {
         style: ElevatedButton.styleFrom(
           backgroundColor: XColors.primary,
           padding: const EdgeInsets.symmetric(vertical: 14),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
+          shape:
+          RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         ),
-        child: Text(text, style: TextStyle(fontSize: 14, color: Colors.white)),
+        child: Text(text,
+            style: const TextStyle(fontSize: 14, color: Colors.white)),
       ),
     );
   }

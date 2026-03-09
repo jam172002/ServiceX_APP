@@ -30,8 +30,10 @@ class ProfileBookingCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: () =>
-          Get.to(() => RequestDetailScreen(isRequestDetailScreen: false)),
+      onTap: () => Get.to(() => RequestDetailScreen(
+        isRequestDetailScreen: false,
+        jobId: data['jobId'] as String? ?? '',
+      )),
       child: Container(
         width: 240,
         height: 120,
