@@ -27,7 +27,7 @@ class AllCatagoriesScreen extends StatelessWidget {
             physics: const BouncingScrollPhysics(),
             padding: const EdgeInsets.all(16.0),
             child: CategoryGrid(
-              categories: controller.categories, // ✅ pass model list
+              categories: controller.categories,
               isLoading: false,
             ),
           );

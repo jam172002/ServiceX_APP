@@ -3,7 +3,8 @@ import 'package:get/get.dart';
 import 'package:servicex_client_app/domain/models/service_category.dart';
 import 'package:servicex_client_app/presentation/widgets/category_shimmer.dart';
 import 'package:servicex_client_app/presentation/widgets/single_category.dart';
-import 'package:servicex_client_app/presentation/screens/categories_n_subcategories/all_subcategories_screen.dart';
+
+import '../screens/categories_n_subcategories/all_subcategories_screen.dart';
 
 class CategoryGrid extends StatelessWidget {
   final List<ServiceCategory> categories;
@@ -35,13 +36,13 @@ class CategoryGrid extends StatelessWidget {
 
         return XSingleCategory(
           title: item.name,
-          icon: item.iconUrl, // ✅ URL now
-          onTap: () {
-            Get.to(() => SubcategoriesScreen(
+          icon: item.iconUrl,
+          onTap: () => Get.to(
+                () => SubcategoriesScreen(
               categoryId: item.id,
               categoryName: item.name,
-            ));
-          },
+            ),
+          ),
         );
       },
     );

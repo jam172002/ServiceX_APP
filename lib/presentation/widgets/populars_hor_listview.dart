@@ -9,14 +9,15 @@ class PopularHomeHorizontalList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Dummy data
+    // Dummy data — replace with real subcategoryId when wiring to Firestore
     final cardData = {
       "title": "House Wirings",
       "mainCategory": "Electric",
       "description":
-          "Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium.",
+      "Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium.",
       "price": "\$20/hour",
       "imagePath": XImages.serviceProviderBanner,
+      "subcategoryId": "", // TODO: replace with real subcategory ID
     };
 
     return SizedBox(
@@ -24,8 +25,8 @@ class PopularHomeHorizontalList extends StatelessWidget {
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         itemCount: 8,
-        padding: EdgeInsets.only(left: 16),
-        separatorBuilder: (_, __) => SizedBox(width: 16),
+        padding: const EdgeInsets.only(left: 16),
+        separatorBuilder: (_, __) => const SizedBox(width: 16),
         itemBuilder: (_, index) => PopularHomeCard(
           title: cardData["title"]!,
           mainCategory: cardData["mainCategory"]!,
@@ -33,7 +34,10 @@ class PopularHomeHorizontalList extends StatelessWidget {
           price: cardData["price"]!,
           imagePath: cardData["imagePath"]!,
           onTap: () => Get.to(
-            CatagoryServiceProviderScreen(screenTitle: 'Wiring and Rewiring'),
+                () => CatagoryServiceProviderScreen(
+              screenTitle: 'Wiring and Rewiring',
+              subcategoryId: cardData["subcategoryId"]!,
+            ),
           ),
         ),
       ),

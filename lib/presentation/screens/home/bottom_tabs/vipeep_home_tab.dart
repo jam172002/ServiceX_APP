@@ -260,9 +260,7 @@ class _VipeepHomeScreenState extends State<VipeepHomeScreen> {
                     actionText: 'See all',
                     sidePadding: 16,
                     onActionTap: () => Get.to(
-                          () => const CatagoryServiceProviderScreen(
-                        screenTitle: 'Near You',
-                      ),
+                          () => const CatagoryServiceProviderScreen(screenTitle: 'Near You', subcategoryId: '')
                     ),
                   ),
                   const SizedBox(height: 15),

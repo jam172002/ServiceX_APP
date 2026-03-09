@@ -216,183 +216,176 @@ class _CreateServiceJobScreenState extends State<CreateServiceJobScreen> {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: const XAppBar(title: 'Create Job'),
-      body: Stack(
-        children: [
-          SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                if (widget.showServiceProviderCard) _buildSpCard(),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            //? Service Provider Card
+            if (widget.showServiceProviderCard) _buildSpCard(),
 
-                _buildSectionLabel('Service Type'),
-                const SizedBox(height: 8),
-                _buildCategoryRow(),
+            //? Service Type — horizontal chips (Firebase categories)
+            _buildCategoryRow(),
 
-                const SizedBox(height: 12),
-                _buildSectionLabel('Sub-Type'),
-                const SizedBox(height: 8),
-                _buildSubcategoryDropdown(),
+            const SizedBox(height: 12),
 
-                const SizedBox(height: 12),
-                // ── pickedImages is RxList — read .length to register reactive listener
-                Obx(() {
-                  final images = _c.pickedImages.toList(); // reads RxList reactively
-                  return DetailsSection(
-                    detailsController: _c.detailsController,
-                    pickedImages: images,
-                    onPickImages: _c.pickImages,
-                    onPickCameraImage: _c.pickImageFromCamera,
-                    onRemoveImage: _c.removeImage,
-                  );
-                }),
-
-                const SizedBox(height: 20),
-                // ── currentLocation is Rx<LocationModel?> — .value read inside closure
-                Obx(() {
-                  final address = _c.locationController.currentLocation.value?.address
-                      ?? 'Select location';
-                  return LocationSection(
-                    location: address,
-                    onEdit: _editLocation,
-                  );
-                }),
-
-                const SizedBox(height: 20),
-                // ── selectedDate and selectedTime are Rx — .value read inside closure
-                Obx(() {
-                  final date = _c.selectedDate.value;
-                  final time = _c.selectedTime.value;
-                  return DateTimeSection(
-                    selectedDate: date,
-                    selectedTime: time,
-                    onSelectDate: _selectDate,
-                    onSelectTime: _selectTime,
-                  );
-                }),
-
-                const SizedBox(height: 20),
-                // ── budgetRange is Rx<RangeValues> — .value read inside closure
-                Obx(() {
-                  final range = _c.budgetRange.value;
-                  return BudgetSection(
-                    minController: _c.minController,
-                    maxController: _c.maxController,
-                    budgetRange: range,
-                    onChanged: _c.updateBudgetRange,
-                  );
-                }),
-
-                const SizedBox(height: 20),
-                // ── selectedPayment is RxString — pass and receive plain String
-                Obx(() {
-                  final payment = _c.selectedPayment.value;
-                  return PaymentSection(
-                    selectedPayment: payment,
-                    onSelect: (val) => _c.selectedPayment.value = val,
-                  );
-                }),
-
-                const SizedBox(height: 25),
-                // ── isSubmitting is RxBool — .value read inside closure
-                Obx(() {
-                  final submitting = _c.isSubmitting.value;
-                  return SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: submitting ? null : _submit,
-                      style: ElevatedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        backgroundColor: XColors.primary,
-                        disabledBackgroundColor: XColors.primary.withValues(alpha: 0.5),
-                      ),
-                      child: submitting
-                          ? const SizedBox(
-                        height: 20,
-                        width: 20,
-                        child: CircularProgressIndicator(
-                          color: Colors.white,
-                          strokeWidth: 2,
-                        ),
-                      )
-                          : const Text(
-                        'Create Job',
-                        style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
-                      ),
-                    ),
-                  );
-                }),
-                const SizedBox(height: 30),
-              ],
+            //? Sub-Type
+            Text(
+              "Sub-Type",
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
             ),
-          ),
+            const SizedBox(height: 8),
+            _buildSubcategoryDropdown(),
 
-          // Full-screen loading overlay while uploading images + saving
-          Obx(() {
-            final submitting = _c.isSubmitting.value; // .value read → reactive
-            if (!submitting) return const SizedBox.shrink();
-            return Container(
-              color: Colors.black26,
-              child: const Center(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    CircularProgressIndicator(color: Colors.white),
-                    SizedBox(height: 12),
-                    Text(
-                      'Creating job…',
-                      style: TextStyle(color: Colors.white, fontSize: 14),
+            const SizedBox(height: 12),
+
+            //? Details + images
+            Obx(() {
+              final images = _c.pickedImages.toList();
+              return DetailsSection(
+                detailsController: _c.detailsController,
+                pickedImages: images,
+                onPickImages: _c.pickImages,
+                onPickCameraImage: _c.pickImageFromCamera,
+                onRemoveImage: _c.removeImage,
+              );
+            }),
+
+            const SizedBox(height: 20),
+
+            //? Location
+            Obx(() {
+              final address =
+                  _c.locationController.currentLocation.value?.address ??
+                      'Select location';
+              return LocationSection(
+                location: address,
+                onEdit: _editLocation,
+              );
+            }),
+
+            const SizedBox(height: 20),
+
+            //? Date & Time
+            Obx(() => DateTimeSection(
+              selectedDate: _c.selectedDate.value,
+              selectedTime: _c.selectedTime.value,
+              onSelectDate: _selectDate,
+              onSelectTime: _selectTime,
+            )),
+
+            const SizedBox(height: 20),
+
+            //? Budget
+            Obx(() => BudgetSection(
+              minController: _c.minController,
+              maxController: _c.maxController,
+              budgetRange: _c.budgetRange.value,
+              onChanged: _c.updateBudgetRange,
+            )),
+
+            const SizedBox(height: 20),
+
+            //? Payment
+            Obx(() => PaymentSection(
+              selectedPayment: _c.selectedPayment.value,
+              onSelect: (val) => _c.selectedPayment.value = val,
+            )),
+
+            const SizedBox(height: 25),
+
+            //? Submit
+            Obx(() {
+              final submitting = _c.isSubmitting.value;
+              return SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: submitting ? null : _submit,
+                  style: ElevatedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    backgroundColor: XColors.primary,
+                    disabledBackgroundColor:
+                    XColors.primary.withValues(alpha: 0.5),
+                  ),
+                  child: submitting
+                      ? const SizedBox(
+                    height: 20,
+                    width: 20,
+                    child: CircularProgressIndicator(
+                      color: Colors.white,
+                      strokeWidth: 2,
                     ),
-                  ],
+                  )
+                      : const Text(
+                    'Create Job',
+                    style: TextStyle(
+                        fontSize: 15, fontWeight: FontWeight.w600),
+                  ),
                 ),
-              ),
-            );
-          }),
-        ],
+              );
+            }),
+
+            const SizedBox(height: 30),
+          ],
+        ),
       ),
     );
   }
 
   // ── Section helpers ──────────────────────────────────────────
 
-  Widget _buildSectionLabel(String text) => Text(
-    text,
-    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
-  );
-
   Widget _buildCategoryRow() {
     return Obx(() {
-      if (_c.categoriesLoading.value) {
-        return const SizedBox(
-          height: 80,
-          child: Center(child: CircularProgressIndicator()),
-        );
-      }
-      if (_c.categoriesError.value.isNotEmpty) {
-        return Text(
-          'Error: ${_c.categoriesError.value}',
-          style: const TextStyle(color: Colors.red, fontSize: 12),
-        );
-      }
-      if (_c.categories.isEmpty) {
-        return const Text('No categories found', style: TextStyle(color: Colors.grey));
-      }
+      final isLoading = _c.categoriesLoading.value;
+      final hasError = _c.categoriesError.value.isNotEmpty;
 
-      return SizedBox(
-        height: 90,
-        child: ListView.separated(
-          scrollDirection: Axis.horizontal,
-          itemCount: _c.categories.length,
-          separatorBuilder: (_, __) => const SizedBox(width: 10),
-          itemBuilder: (_, i) {
-            final cat = _c.categories[i];
-            return Obx(() => _CategoryChip(
-              category: cat,
-              isSelected: _c.selectedCategory.value?.id == cat.id,
-              onTap: () => _c.selectCategory(cat),
-            ));
-          },
-        ),
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // ── Label — same as ServiceTypeSection renders it internally ──
+          const Text(
+            'Service Type',
+            style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15),
+          ),
+          const SizedBox(height: 12),
+
+          // ── Chips row ─────────────────────────────────────────────
+          SizedBox(
+            height: 90,
+            child: isLoading
+                ? const Center(child: CircularProgressIndicator())
+                : hasError
+                ? Center(
+              child: Text(
+                'Could not load categories',
+                style: TextStyle(color: Colors.red.shade400, fontSize: 12),
+              ),
+            )
+                : ListView.separated(
+              scrollDirection: Axis.horizontal,
+              itemCount: _c.categories.length + 1, // +1 for "Other"
+              separatorBuilder: (_, __) => const SizedBox(width: 10),
+              itemBuilder: (_, i) {
+                // Last item → "Other" tile
+                if (i == _c.categories.length) {
+                  return _OtherChip(
+                    onTap: () {
+                      // No AllServicesDialog with Firebase — just a no-op
+                      // or you can show a search bottom sheet later
+                    },
+                  );
+                }
+                final cat = _c.categories[i];
+                return Obx(() => _CategoryChip(
+                  category: cat,
+                  isSelected:
+                  _c.selectedCategory.value?.id == cat.id,
+                  onTap: () => _c.selectCategory(cat),
+                ));
+              },
+            ),
+          ),
+        ],
       );
     });
   }
@@ -506,7 +499,47 @@ class _CreateServiceJobScreenState extends State<CreateServiceJobScreen> {
   }
 }
 
-// ── Category Chip ─────────────────────────────────────────────────
+// ── Other Chip (matches original AllServices tile) ───────────────────────────
+class _OtherChip extends StatelessWidget {
+  final VoidCallback onTap;
+  const _OtherChip({required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 72,
+        decoration: BoxDecoration(
+          color: XColors.secondaryBG,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: XColors.borderColor, width: 1),
+        ),
+        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 6),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.grid_view_rounded, size: 26, color: XColors.grey),
+            const SizedBox(height: 5),
+            const Text(
+              'Other',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 10,
+                fontWeight: FontWeight.w400,
+                color: XColors.black,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+
 class _CategoryChip extends StatelessWidget {
   final ServiceCategory category;
   final bool isSelected;
