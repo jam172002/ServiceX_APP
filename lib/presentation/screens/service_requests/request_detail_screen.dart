@@ -5,7 +5,7 @@ import 'package:servicex_client_app/domain/models/job_request_model.dart';
 import 'package:servicex_client_app/presentation/screens/service_requests/controller/job_detail_controller.dart';
 import 'package:servicex_client_app/presentation/widgets/common_appbar.dart';
 import 'package:servicex_client_app/presentation/widgets/reject_offer_dialog.dart';
-import 'package:servicex_client_app/presentation/screens/service_requests/create_service_job_screen.dart';
+import 'package:servicex_client_app/presentation/screens/service_requests/create_job_screen.dart';
 import 'package:servicex_client_app/presentation/screens/service_provider_profile/service_provider_profile_screen.dart';
 import 'package:servicex_client_app/presentation/screens/service_requests/check_offers_screen.dart';
 import 'package:servicex_client_app/utils/constants/colors.dart';

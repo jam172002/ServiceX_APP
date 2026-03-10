@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:servicex_client_app/domain/models/service_subcategory.dart';
+import 'package:servicex_client_app/presentation/screens/bookings/create_booking_screen.dart';
 import 'package:servicex_client_app/presentation/screens/categories_n_subcategories/controller/subcategories_controller.dart';
 import 'package:servicex_client_app/presentation/screens/categories_n_subcategories/subcatagory_service_providers_screen.dart';
 import 'package:servicex_client_app/presentation/widgets/common_appbar.dart';
@@ -37,12 +38,10 @@ class SubcategoriesScreen extends StatelessWidget {
 
             Expanded(
               child: Obx(() {
-                // ── Loading ──────────────────────────────────────
                 if (controller.subsLoading.value) {
                   return const Center(child: CircularProgressIndicator());
                 }
 
-                // ── Error ────────────────────────────────────────
                 if (controller.subsError.value.isNotEmpty) {
                   return Center(
                     child: Text(
@@ -52,7 +51,6 @@ class SubcategoriesScreen extends StatelessWidget {
                   );
                 }
 
-                // ── Empty ────────────────────────────────────────
                 if (controller.subcategories.isEmpty) {
                   return const Center(
                     child: Text(
@@ -62,7 +60,6 @@ class SubcategoriesScreen extends StatelessWidget {
                   );
                 }
 
-                // ── List ─────────────────────────────────────────
                 return SingleChildScrollView(
                   child: Column(
                     children: [
@@ -88,9 +85,6 @@ class SubcategoriesScreen extends StatelessWidget {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────
-// One subcategory section — loads its own fixxers on first render
-// ─────────────────────────────────────────────────────────────────
 class _SubcategorySection extends StatefulWidget {
   final ServiceSubcategory sub;
   final SubcategoriesController controller;
@@ -105,7 +99,6 @@ class _SubcategorySection extends StatefulWidget {
 }
 
 class _SubcategorySectionState extends State<_SubcategorySection> {
-  // Each section manages its own fixxers stream independently
   final RxList<Map<String, dynamic>> _providers = <Map<String, dynamic>>[].obs;
   final RxBool _loading = true.obs;
 
@@ -117,8 +110,6 @@ class _SubcategorySectionState extends State<_SubcategorySection> {
 
   void _fetchFixxers() {
     widget.controller.loadFixxersForSubcategory(widget.sub);
-
-    // Watch the shared fixxers list and filter for this subcategory
     ever(widget.controller.fixxers, (_) => _syncProviders());
     ever(widget.controller.fixxersLoading, (_) => _syncProviders());
     _syncProviders();
@@ -142,7 +133,14 @@ class _SubcategorySectionState extends State<_SubcategorySection> {
           () => ServiceProviderProfileScreen(),
       arguments: fixer,
     ),
-    'onInvite': () => debugPrint('Invited: ${fixer.fullName}'),
+    'onBook': () => Get.to(
+          () => CreateBookingScreen(
+        fixerId: fixer.uid,
+        fixerName: fixer.fullName,
+        fixerImageUrl: fixer.profileImageUrl,
+        fixerCategoryName: widget.sub.name,
+      ),
+    ),
   };
 
   @override

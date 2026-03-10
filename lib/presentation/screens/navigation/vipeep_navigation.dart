@@ -2,7 +2,7 @@ import 'dart:ui';
 import 'package:custom_navigation_bar/custom_navigation_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:iconsax/iconsax.dart';
-import 'package:servicex_client_app/presentation/screens/bookings/vipeep_booking_screen.dart';
+import 'package:servicex_client_app/presentation/screens/bookings/booking_list_screen.dart';
 import 'package:servicex_client_app/presentation/screens/home/bottom_tabs/vipeep_home_tab.dart';
 import 'package:servicex_client_app/presentation/screens/chat/vipeep_allchat_screen.dart';
 import 'package:servicex_client_app/presentation/screens/home/bottom_tabs/vipeep_profile_tab.dart';
@@ -21,7 +21,7 @@ class _VipeepNavigationState extends State<VipeepNavigation> {
 
   final List<Widget> _screens = [
     VipeepHomeScreen(),
-    VipeepBookingScreen(),
+    BookingListScreen(),
     VipeepRequestTab(),
     VipeepAllChatScreen(),
     VipeepProfileTab(),

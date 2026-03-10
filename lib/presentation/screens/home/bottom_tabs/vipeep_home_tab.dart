@@ -8,7 +8,7 @@ import 'package:servicex_client_app/presentation/widgets/map_view_container.dart
 import 'package:servicex_client_app/presentation/widgets/simple_heading.dart';
 import 'package:servicex_client_app/presentation/controllers/location_controller.dart';
 import 'package:servicex_client_app/presentation/screens/categories_n_subcategories/all_catagories_screen.dart';
-import 'package:servicex_client_app/presentation/screens/service_requests/create_service_job_screen.dart';
+import 'package:servicex_client_app/presentation/screens/service_requests/create_job_screen.dart';
 import 'package:servicex_client_app/presentation/screens/home/notifications_screen.dart';
 import 'package:servicex_client_app/presentation/screens/home/search_screen.dart';
 import 'package:servicex_client_app/presentation/screens/service_provider_profile/service_provider_profile_screen.dart';
