@@ -76,31 +76,7 @@ class ServiceProviderProfileHeader extends StatelessWidget {
                 ],
               ),
 
-              // Right: location — Flexible so it never overflows
-              Flexible(
-                child: Padding(
-                  padding: const EdgeInsets.only(bottom: 3.0),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: [
-                      const Icon(Icons.location_on,
-                          color: XColors.grey, size: 16),
-                      const SizedBox(width: 4),
-                      Flexible(
-                        child: Text(
-                          location,
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                          textAlign: TextAlign.end,
-                          style: const TextStyle(
-                              color: XColors.grey, fontSize: 12),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
+
             ],
           ),
         ),

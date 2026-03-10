@@ -256,7 +256,28 @@ class _ServiceProviderProfileScreenState
                         ),
 
                         const SizedBox(height: 6),
-
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: [
+                            const Icon(Icons.location_on,
+                                color: XColors.grey, size: 16),
+                            const SizedBox(width: 4),
+                            Flexible(
+                              child: Text(
+                                  f?.address.isNotEmpty == true
+                                      ? f!.address
+                                      : 'Location not set',
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                                textAlign: TextAlign.end,
+                                style: const TextStyle(
+                                    color: XColors.grey, fontSize: 12),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 6),
                         // ── Available days ────────────────────────────
                         if (f != null && f.availableDays.isNotEmpty)
                           Wrap(
