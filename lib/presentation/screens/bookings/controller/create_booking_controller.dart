@@ -10,37 +10,29 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../../../../domain/enums/app_enums.dart';
 import '../../../../domain/models/booking_model.dart';
-import '../../../../domain/models/service_category.dart';
+import '../../../../domain/models/fixer_model.dart';
 import '../../../../domain/models/service_subcategory.dart';
 import '../../../../domain/repos/booking_repository.dart';
-import '../../../../domain/repos/service_catalog_repo.dart';
 import '../../../controllers/location_controller.dart';
 
 class CreateBookingController extends GetxController {
   // ── Dependencies ──────────────────────────────────────────────
-  final ServiceCatalogRepo _catalogRepo =
-  ServiceCatalogRepo(FirebaseFirestore.instance);
   final BookingRepository _bookingRepo = BookingRepository();
   final LocationController locationController = Get.find<LocationController>();
 
-  // ── Fixer (passed from previous screen) ──────────────────────
-  // Set once from CreateBookingScreen.initState — never changes mid-session.
-  late final String fixerId;
-  late final String fixerName;
-  late final String? fixerImageUrl;
+  // ── Fixer — set once from screen initState ────────────────────
+  late final FixerModel fixer;
 
-  // ── Categories / Subcategories ────────────────────────────────
-  final RxList<ServiceCategory> categories = <ServiceCategory>[].obs;
+  // ── Category is fixed — taken directly from fixer ─────────────
+  // Reactive so _buildFixedCategoryRow redraws once Firestore resolves the name.
+  String fixerCategoryId = '';
+  final RxString fixerCategoryName = ''.obs;
+
+  // ── Subcategories — only the fixer's own subs ─────────────────
   final RxList<ServiceSubcategory> subcategories = <ServiceSubcategory>[].obs;
-  final RxBool categoriesLoading = true.obs;
-  final RxBool subcategoriesLoading = false.obs;
-  final RxString categoriesError = ''.obs;
-
-  final Rx<ServiceCategory?> selectedCategory = Rx<ServiceCategory?>(null);
+  final RxBool subcategoriesLoading = true.obs;
   final Rx<ServiceSubcategory?> selectedSubcategory =
   Rx<ServiceSubcategory?>(null);
-
-  StreamSubscription<List<ServiceCategory>>? _categorySub;
 
   // ── Form fields ───────────────────────────────────────────────
   final TextEditingController detailsController = TextEditingController();
@@ -58,67 +50,51 @@ class CreateBookingController extends GetxController {
 
   final ImagePicker _picker = ImagePicker();
 
-  // ── Optional: pre-select category (e.g. from fixer's profile) ─
-  String? preselectedCategoryName;
-
   // ─────────────────────────────────────────────────────────────
   @override
   void onInit() {
     super.onInit();
     minController.text = budgetRange.value.start.round().toString();
     maxController.text = budgetRange.value.end.round().toString();
-    _listenCategories();
   }
 
-  @override
-  void onClose() {
-    _categorySub?.cancel();
-    detailsController.dispose();
-    minController.dispose();
-    maxController.dispose();
-    super.onClose();
-  }
-
-  // ── Category stream ───────────────────────────────────────────
-  void _listenCategories() {
-    categoriesLoading.value = true;
-    categoriesError.value = '';
-
-    _categorySub?.cancel();
-    _categorySub = _catalogRepo.watchCategories().listen(
-          (data) {
-        categories.assignAll(data);
-        categoriesLoading.value = false;
-
-        // Auto-select if fixer's category was passed in
-        if (preselectedCategoryName != null &&
-            selectedCategory.value == null) {
-          final match = data.firstWhereOrNull(
-                (c) =>
-            c.name.toLowerCase() ==
-                preselectedCategoryName!.toLowerCase(),
-          );
-          if (match != null) selectCategory(match);
-        }
-      },
-      onError: (e) {
-        categoriesError.value = e.toString();
-        categoriesLoading.value = false;
-      },
-    );
-  }
-
-  // ── Category / subcategory selection ─────────────────────────
-  Future<void> selectCategory(ServiceCategory category) async {
-    if (selectedCategory.value?.id == category.id) return;
-    selectedCategory.value = category;
-    selectedSubcategory.value = null;
-    subcategories.clear();
+  /// Called from screen initState after [fixer] is set.
+  /// Fetches only the subcategories that belong to this fixer.
+  Future<void> loadFixerSubcategories() async {
+    if (fixer.subCategories.isEmpty) {
+      subcategoriesLoading.value = false;
+      return;
+    }
 
     subcategoriesLoading.value = true;
     try {
-      final subs = await _catalogRepo.getSubcategories(category.id);
+      // Fetch each subcategory doc by ID — fixer.subCategories is List<String>
+      final docs = await Future.wait(
+        fixer.subCategories.map(
+              (id) => FirebaseFirestore.instance
+              .collection('service_subcategories')
+              .doc(id)
+              .get(),
+        ),
+      );
+
+      final subs = docs
+          .where((d) => d.exists)
+          .map((d) => ServiceSubcategory.fromDoc(d))
+          .toList();
+
       subcategories.assignAll(subs);
+
+      // Resolve the category name from Firestore for display + storage
+      if (fixer.mainCategory.isNotEmpty) {
+        fixerCategoryId = fixer.mainCategory;
+        final catDoc = await FirebaseFirestore.instance
+            .collection('service_categories')
+            .doc(fixer.mainCategory)
+            .get();
+        fixerCategoryName.value =
+            (catDoc.data()?['name'] as String?) ?? fixer.mainCategory;
+      }
     } catch (e) {
       Get.snackbar('Error', 'Failed to load subcategories: $e');
     } finally {
@@ -176,7 +152,6 @@ class CreateBookingController extends GetxController {
 
   // ── Validation ────────────────────────────────────────────────
   String? validate() {
-    if (selectedCategory.value == null) return 'Please select a service type';
     if (selectedSubcategory.value == null) return 'Please select a sub-type';
     if (selectedDate.value == null || selectedTime.value == null) {
       return 'Please select date and time';
@@ -208,7 +183,6 @@ class CreateBookingController extends GetxController {
       final clientId = FirebaseAuth.instance.currentUser?.uid ?? '';
       final now = DateTime.now();
 
-      // Pre-reserve doc ID so Storage paths align before write
       final docRef =
       FirebaseFirestore.instance.collection('bookings').doc();
       final bookingId = docRef.id;
@@ -228,9 +202,9 @@ class CreateBookingController extends GetxController {
       final booking = BookingModel(
         id: bookingId,
         clientId: clientId,
-        fixerId: fixerId, // ← the specific fixer
-        categoryId: selectedCategory.value!.id,
-        categoryName: selectedCategory.value!.name,
+        fixerId: fixer.uid,
+        categoryId: fixerCategoryId,
+        categoryName: fixerCategoryName.value,
         subcategoryId: selectedSubcategory.value!.id,
         subcategoryName: selectedSubcategory.value!.name,
         details: detailsController.text.trim(),
@@ -262,10 +236,10 @@ class CreateBookingController extends GetxController {
     }
   }
 
-  // ── Payload for ConfirmationDialog (display only) ─────────────
+  // ── Payload for ConfirmationDialog ────────────────────────────
   Map<String, dynamic> buildDisplayPayload(BuildContext context) {
     return {
-      'categoryName': selectedCategory.value!.name,
+      'categoryName': fixerCategoryName.value,
       'subcategoryName': selectedSubcategory.value?.name,
       'details': detailsController.text.trim(),
       'location': locationController.currentLocation.value?.address ?? '',
@@ -275,8 +249,15 @@ class CreateBookingController extends GetxController {
       'budgetMax': budgetRange.value.end.round(),
       'payment': selectedPayment.value,
       'images': List<File>.from(pickedImages),
-      // forAll is always false for bookings — direct to one fixer
       'forAll': false,
     };
+  }
+
+  @override
+  void onClose() {
+    detailsController.dispose();
+    minController.dispose();
+    maxController.dispose();
+    super.onClose();
   }
 }

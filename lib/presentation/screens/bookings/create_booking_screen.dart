@@ -3,8 +3,8 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:iconsax/iconsax.dart';
+import 'package:servicex_client_app/domain/models/fixer_model.dart';
 import 'package:servicex_client_app/domain/models/location_model.dart';
-import 'package:servicex_client_app/domain/models/service_category.dart';
 import 'package:servicex_client_app/presentation/screens/bookings/controller/create_booking_controller.dart';
 import 'package:servicex_client_app/presentation/controllers/location_controller.dart';
 import 'package:servicex_client_app/presentation/screens/service_provider_profile/service_provider_profile_screen.dart';
@@ -19,30 +19,27 @@ import 'package:servicex_client_app/presentation/widgets/location_bottom_sheet.d
 import 'package:servicex_client_app/presentation/screens/location/location_selector_screen.dart';
 import 'package:servicex_client_app/utils/constants/colors.dart';
 import 'package:servicex_client_app/utils/constants/images.dart';
+import 'package:servicex_client_app/presentation/screens/chat/single_chat_screen.dart';
+import 'package:servicex_client_app/presentation/screens/chat/controller/chat_controller.dart';
+import 'package:servicex_client_app/services/chat_notification_service.dart';
 
 /// Navigate here from a fixer profile or service-providers list:
 ///
 /// ```dart
 /// Get.to(() => CreateBookingScreen(
-///   fixerId: fixer.uid,
-///   fixerName: fixer.name,
-///   fixerImageUrl: fixer.photoUrl,
-///   fixerCategoryName: fixer.primaryCategory, // optional — auto-selects chip
+///   fixer: fixer,
+///   fixerCategoryName: widget.sub.name, // optional — auto-selects chip
 /// ));
 /// ```
 class CreateBookingScreen extends StatefulWidget {
-  final String fixerId;
-  final String fixerName;
-  final String? fixerImageUrl;
+  final FixerModel fixer;
 
   /// If provided, the matching category chip is auto-selected on load.
   final String? fixerCategoryName;
 
   const CreateBookingScreen({
     super.key,
-    required this.fixerId,
-    required this.fixerName,
-    this.fixerImageUrl,
+    required this.fixer,
     this.fixerCategoryName,
   });
 
@@ -52,17 +49,63 @@ class CreateBookingScreen extends StatefulWidget {
 
 class _CreateBookingScreenState extends State<CreateBookingScreen> {
   late final CreateBookingController _c;
+  bool _isChatLoading = false;
 
   @override
   void initState() {
     super.initState();
     _c = Get.put(CreateBookingController());
 
-    // Wire fixer data into the controller
-    _c.fixerId = widget.fixerId;
-    _c.fixerName = widget.fixerName;
-    _c.fixerImageUrl = widget.fixerImageUrl;
-    _c.preselectedCategoryName = widget.fixerCategoryName;
+    _c.fixer = widget.fixer;
+    _c.loadFixerSubcategories();
+  }
+
+  // ── Open chat ──────────────────────────────────────────────────
+  Future<void> _openChat() async {
+    final f = widget.fixer;
+
+    if (f.uid.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Provider info not available')),
+      );
+      return;
+    }
+
+    setState(() => _isChatLoading = true);
+
+    try {
+      if (!Get.isRegistered<ChatController>()) {
+        Get.put(ChatController());
+      }
+
+      final ctrl = Get.find<ChatController>();
+      final myToken = await ChatNotificationService.instance.getToken();
+
+      await ctrl.openChat(
+        otherId: f.uid,
+        otherName: f.fullName,
+        otherAvatar: f.profileImageUrl,
+        otherFcmToken: f.fcmToken,
+        myFcmToken: myToken,
+      );
+
+      if (!mounted) return;
+
+      Get.to(() => SingleChatScreen(
+        conversationId: ctrl.activeConversationId.value,
+        otherUserId: f.uid,
+        otherUserName: f.fullName,
+        otherUserAvatar: f.profileImageUrl,
+        isServiceProvider: false,
+      ));
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text('$e')));
+      }
+    } finally {
+      if (mounted) setState(() => _isChatLoading = false);
+    }
   }
 
   @override
@@ -184,7 +227,7 @@ class _CreateBookingScreenState extends State<CreateBookingScreen> {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
                   content: Text(
-                    'Booking sent to ${widget.fixerName}!',
+                    'Booking sent to ${widget.fixer.fullName}!',
                   ),
                 ),
               );
@@ -209,12 +252,12 @@ class _CreateBookingScreenState extends State<CreateBookingScreen> {
             // ── Fixer card (always shown) ─────────────────────
             _buildFixerCard(),
 
-            // ── Service Type chips ────────────────────────────
-            _buildCategoryRow(),
+            // ── Category (fixed — from fixer profile) ─────────
+            _buildFixedCategoryRow(),
 
             const SizedBox(height: 12),
 
-            // ── Sub-Type dropdown ─────────────────────────────
+            // ── Sub-Type dropdown (fixer's subcategories only) ─
             const Text(
               'Sub-Type',
               style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
@@ -327,71 +370,93 @@ class _CreateBookingScreenState extends State<CreateBookingScreen> {
           style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15),
         ),
         const SizedBox(height: 12),
-        Row(
-          children: [
-            // Avatar
-            CircleAvatar(
-              radius: 28,
-              backgroundImage: widget.fixerImageUrl != null &&
-                  widget.fixerImageUrl!.isNotEmpty
-                  ? NetworkImage(widget.fixerImageUrl!) as ImageProvider
-                  : AssetImage(XImages.serviceProvider),
-            ),
-            const SizedBox(width: 12),
-            // Name + category
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    widget.fixerName,
-                    style: const TextStyle(
-                        fontSize: 14, fontWeight: FontWeight.w600),
-                  ),
-                  if (widget.fixerCategoryName != null)
+        Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: XColors.secondaryBG,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: XColors.borderColor),
+          ),
+          child: Row(
+            children: [
+              // Avatar
+              CircleAvatar(
+                radius: 28,
+                backgroundImage: widget.fixer.profileImageUrl.isNotEmpty
+                    ? NetworkImage(widget.fixer.profileImageUrl) as ImageProvider
+                    : AssetImage(XImages.serviceProvider),
+              ),
+              const SizedBox(width: 12),
+              // Name + category
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
                     Text(
-                      widget.fixerCategoryName!,
+                      widget.fixer.fullName,
                       style: const TextStyle(
-                        color: Colors.grey,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w400,
-                      ),
+                          fontSize: 14, fontWeight: FontWeight.w600),
                     ),
-                ],
+                    if (widget.fixerCategoryName != null)
+                      Text(
+                        widget.fixerCategoryName!,
+                        style: const TextStyle(
+                          color: Colors.grey,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w400,
+                        ),
+                      ),
+                  ],
+                ),
               ),
-            ),
-            // View profile
-            IconButton.filled(
-              onPressed: () => Get.to(() => ServiceProviderProfileScreen()),
-              icon: const Icon(Iconsax.user, size: 18),
-              style: IconButton.styleFrom(
-                backgroundColor: XColors.primary.withValues(alpha: 0.2),
-                foregroundColor: XColors.primary,
+              // View profile
+              IconButton.filled(
+                onPressed: () => Get.to(
+                      () => ServiceProviderProfileScreen(),
+                  arguments: widget.fixer,
+                ),
+                icon: const Icon(Iconsax.user, size: 18),
+                style: IconButton.styleFrom(
+                  backgroundColor: XColors.primary.withValues(alpha: 0.2),
+                  foregroundColor: XColors.primary,
+                ),
               ),
-            ),
-            // Message
-            IconButton.filled(
-              onPressed: () {
-                // TODO: navigate to chat screen with fixerId
-              },
-              icon: const Icon(Iconsax.sms, size: 18),
-              style: IconButton.styleFrom(
-                backgroundColor: XColors.primary.withValues(alpha: 0.2),
-                foregroundColor: XColors.primary,
+              // Message
+              IconButton.filled(
+                onPressed: _isChatLoading ? null : _openChat,
+                icon: _isChatLoading
+                    ? const SizedBox(
+                  width: 18,
+                  height: 18,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: XColors.primary,
+                  ),
+                )
+                    : const Icon(Iconsax.sms, size: 18),
+                style: IconButton.styleFrom(
+                  backgroundColor: XColors.primary.withValues(alpha: 0.2),
+                  foregroundColor: XColors.primary,
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
         const SizedBox(height: 16),
       ],
     );
   }
 
-  // ── Category chips ────────────────────────────────────────────
-  Widget _buildCategoryRow() {
+  // ── Fixed category display (not selectable) ─────────────────
+  Widget _buildFixedCategoryRow() {
+    // categoryName is resolved once after loadFixerSubcategories completes.
+    // Wrap in Obx via subcategoriesLoading so it redraws when loading finishes.
     return Obx(() {
-      final isLoading = _c.categoriesLoading.value;
-      final hasError = _c.categoriesError.value.isNotEmpty;
+      final categoryName = _c.subcategoriesLoading.value
+          ? widget.fixer.mainCategory
+          : _c.fixerCategoryName.value.isNotEmpty
+          ? _c.fixerCategoryName.value
+          : widget.fixer.mainCategory;
 
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -400,33 +465,30 @@ class _CreateBookingScreenState extends State<CreateBookingScreen> {
             'Service Type',
             style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15),
           ),
-          const SizedBox(height: 12),
-          SizedBox(
-            height: 90,
-            child: isLoading
-                ? const Center(child: CircularProgressIndicator())
-                : hasError
-                ? Center(
-              child: Text(
-                'Could not load categories',
-                style: TextStyle(
-                    color: Colors.red.shade400, fontSize: 12),
-              ),
-            )
-                : ListView.separated(
-              scrollDirection: Axis.horizontal,
-              itemCount: _c.categories.length,
-              separatorBuilder: (_, __) =>
-              const SizedBox(width: 10),
-              itemBuilder: (_, i) {
-                final cat = _c.categories[i];
-                return Obx(() => _CategoryChip(
-                  category: cat,
-                  isSelected:
-                  _c.selectedCategory.value?.id == cat.id,
-                  onTap: () => _c.selectCategory(cat),
-                ));
-              },
+          const SizedBox(height: 8),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            decoration: BoxDecoration(
+              color: XColors.primary.withValues(alpha: 0.08),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: XColors.primary, width: 1.5),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.build_outlined, size: 16, color: XColors.primary),
+                const SizedBox(width: 8),
+                Text(
+                  categoryName,
+                  style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: XColors.primary,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                const Icon(Icons.lock_outline, size: 13, color: XColors.primary),
+              ],
             ),
           ),
         ],
@@ -439,15 +501,12 @@ class _CreateBookingScreenState extends State<CreateBookingScreen> {
     return Obx(() {
       final isLoading = _c.subcategoriesLoading.value;
       final subs = _c.subcategories;
-      final noCat = _c.selectedCategory.value == null;
 
       return DropdownButtonFormField<String>(
         initialValue: _c.selectedSubcategory.value?.id,
         hint: Text(
           isLoading
               ? 'Loading…'
-              : noCat
-              ? 'Select category first'
               : subs.isEmpty
               ? 'No sub-types available'
               : 'Select sub-type',
@@ -477,7 +536,7 @@ class _CreateBookingScreenState extends State<CreateBookingScreen> {
               style: const TextStyle(fontSize: 13)),
         ))
             .toList(),
-        onChanged: (!noCat && !isLoading && subs.isNotEmpty)
+        onChanged: (!isLoading && subs.isNotEmpty)
             ? (val) {
           final sub = subs.firstWhereOrNull((s) => s.id == val);
           if (sub != null) _c.selectSubcategory(sub);
@@ -485,85 +544,5 @@ class _CreateBookingScreenState extends State<CreateBookingScreen> {
             : null,
       );
     });
-  }
-}
-
-// ── Category chip (local — identical to CreateServiceJobScreen's) ─────────────
-class _CategoryChip extends StatelessWidget {
-  final ServiceCategory category;
-  final bool isSelected;
-  final VoidCallback onTap;
-
-  const _CategoryChip({
-    required this.category,
-    required this.isSelected,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        width: 72,
-        decoration: BoxDecoration(
-          color: isSelected
-              ? XColors.primary.withValues(alpha: 0.12)
-              : XColors.secondaryBG,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: isSelected ? XColors.primary : XColors.borderColor,
-            width: isSelected ? 1.5 : 1,
-          ),
-        ),
-        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 6),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            SizedBox(
-              width: 32,
-              height: 32,
-              child: category.iconUrl.isNotEmpty
-                  ? Image.network(
-                category.iconUrl,
-                fit: BoxFit.contain,
-                loadingBuilder: (_, child, progress) =>
-                progress == null
-                    ? child
-                    : const Padding(
-                  padding: EdgeInsets.all(6),
-                  child: CircularProgressIndicator(
-                      strokeWidth: 1.5),
-                ),
-                errorBuilder: (_, __, ___) => Icon(
-                  Icons.build_outlined,
-                  size: 26,
-                  color: isSelected ? XColors.primary : XColors.grey,
-                ),
-              )
-                  : Icon(
-                Icons.build_outlined,
-                size: 26,
-                color: isSelected ? XColors.primary : XColors.grey,
-              ),
-            ),
-            const SizedBox(height: 5),
-            Text(
-              category.name,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 10,
-                fontWeight:
-                isSelected ? FontWeight.w600 : FontWeight.w400,
-                color: isSelected ? XColors.primary : XColors.black,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
   }
 }

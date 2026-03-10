@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:servicex_client_app/domain/models/fixer_model.dart';
 import 'package:servicex_client_app/domain/models/service_subcategory.dart';
 import 'package:servicex_client_app/presentation/screens/bookings/create_booking_screen.dart';
 import 'package:servicex_client_app/presentation/screens/categories_n_subcategories/controller/subcategories_controller.dart';
@@ -118,13 +119,15 @@ class _SubcategorySectionState extends State<_SubcategorySection> {
   void _syncProviders() {
     if (widget.controller.selectedSubcategory.value?.id == widget.sub.id) {
       _providers.assignAll(
-        widget.controller.fixxers.map((f) => _toProviderMap(f)).toList(),
+        widget.controller.fixxers
+            .map((f) => _toProviderMap(f))
+            .toList(),
       );
       _loading.value = widget.controller.fixxersLoading.value;
     }
   }
 
-  Map<String, dynamic> _toProviderMap(fixer) => {
+  Map<String, dynamic> _toProviderMap(FixerModel fixer) => {
     'name': fixer.fullName,
     'location': fixer.address,
     'rating': 4.5,
@@ -135,9 +138,7 @@ class _SubcategorySectionState extends State<_SubcategorySection> {
     ),
     'onBook': () => Get.to(
           () => CreateBookingScreen(
-        fixerId: fixer.uid,
-        fixerName: fixer.fullName,
-        fixerImageUrl: fixer.profileImageUrl,
+        fixer: fixer,
         fixerCategoryName: widget.sub.name,
       ),
     ),
