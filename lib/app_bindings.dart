@@ -9,7 +9,7 @@ import 'package:servicex_client_app/domain/repos/wallet_repository.dart';
 import 'package:servicex_client_app/presentation/screens/authentication/controller/auth_controller.dart';
 import 'package:servicex_client_app/presentation/screens/categories_n_subcategories/controller/category_controller.dart';
 import 'package:servicex_client_app/presentation/controllers/location_controller.dart';
-import 'package:servicex_client_app/presentation/controllers/x_search_controller.dart';
+import 'package:servicex_client_app/presentation/screens/search/x_search_controller.dart';
 import 'package:servicex_client_app/presentation/screens/chat/controller/chat_controller.dart';
 import 'package:servicex_client_app/presentation/screens/home/bottom_tabs/controller/home_tab_controller.dart';
 import 'package:servicex_client_app/presentation/screens/profile/controller/user_profile_controller.dart';

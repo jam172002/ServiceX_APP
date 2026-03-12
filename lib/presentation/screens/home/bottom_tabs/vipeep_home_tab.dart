@@ -10,7 +10,7 @@ import 'package:servicex_client_app/presentation/controllers/location_controller
 import 'package:servicex_client_app/presentation/screens/categories_n_subcategories/all_catagories_screen.dart';
 import 'package:servicex_client_app/presentation/screens/service_requests/create_job_screen.dart';
 import 'package:servicex_client_app/presentation/screens/home/notifications_screen.dart';
-import 'package:servicex_client_app/presentation/screens/home/search_screen.dart';
+import 'package:servicex_client_app/presentation/screens/search/search_screen.dart';
 import 'package:servicex_client_app/presentation/screens/categories_n_subcategories/subcatagory_service_providers_screen.dart';
 import 'package:servicex_client_app/presentation/widgets/category_listview.dart';
 import 'package:servicex_client_app/presentation/widgets/populars_hor_listview.dart';
