@@ -11,6 +11,7 @@ import 'package:servicex_client_app/presentation/screens/categories_n_subcategor
 import 'package:servicex_client_app/presentation/controllers/location_controller.dart';
 import 'package:servicex_client_app/presentation/controllers/x_search_controller.dart';
 import 'package:servicex_client_app/presentation/screens/chat/controller/chat_controller.dart';
+import 'package:servicex_client_app/presentation/screens/home/bottom_tabs/controller/home_tab_controller.dart';
 import 'package:servicex_client_app/presentation/screens/profile/controller/user_profile_controller.dart';
 
 class AppBindings extends Bindings {
@@ -43,6 +44,11 @@ class AppBindings extends Bindings {
           () => UserProfileController(
         userRepo: Get.find<UserRepository>(),
       ),
+      fenix: true,
+    );
+
+    Get.lazyPut<HomeController>(
+          () => HomeController(),
       fenix: true,
     );
 

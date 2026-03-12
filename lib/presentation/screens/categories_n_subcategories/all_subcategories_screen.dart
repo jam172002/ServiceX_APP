@@ -1,15 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:servicex_client_app/domain/models/fixer_model.dart';
 import 'package:servicex_client_app/domain/models/service_subcategory.dart';
-import 'package:servicex_client_app/presentation/screens/bookings/create_booking_screen.dart';
 import 'package:servicex_client_app/presentation/screens/categories_n_subcategories/controller/subcategories_controller.dart';
 import 'package:servicex_client_app/presentation/screens/categories_n_subcategories/subcatagory_service_providers_screen.dart';
 import 'package:servicex_client_app/presentation/widgets/common_appbar.dart';
 import 'package:servicex_client_app/presentation/widgets/search_filter_container.dart';
 import 'package:servicex_client_app/presentation/widgets/single_subcatagory.dart';
 
-import '../service_provider_profile/service_provider_profile_screen.dart';
+import '../../../domain/models/fixxer_model.dart';
 
 class SubcategoriesScreen extends StatelessWidget {
   final String categoryId;
@@ -86,6 +84,8 @@ class SubcategoriesScreen extends StatelessWidget {
   }
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+
 class _SubcategorySection extends StatefulWidget {
   final ServiceSubcategory sub;
   final SubcategoriesController controller;
@@ -100,7 +100,8 @@ class _SubcategorySection extends StatefulWidget {
 }
 
 class _SubcategorySectionState extends State<_SubcategorySection> {
-  final RxList<Map<String, dynamic>> _providers = <Map<String, dynamic>>[].obs;
+  // ✅ Now List<FixxerUser> directly — no more Map conversion
+  final RxList<FixxerUser> _providers = <FixxerUser>[].obs;
   final RxBool _loading = true.obs;
 
   @override
@@ -118,31 +119,10 @@ class _SubcategorySectionState extends State<_SubcategorySection> {
 
   void _syncProviders() {
     if (widget.controller.selectedSubcategory.value?.id == widget.sub.id) {
-      _providers.assignAll(
-        widget.controller.fixxers
-            .map((f) => _toProviderMap(f))
-            .toList(),
-      );
+      _providers.assignAll(widget.controller.fixxers as Iterable<FixxerUser>);
       _loading.value = widget.controller.fixxersLoading.value;
     }
   }
-
-  Map<String, dynamic> _toProviderMap(FixerModel fixer) => {
-    'name': fixer.fullName,
-    'location': fixer.address,
-    'rating': 4.5,
-    'imageUrl': fixer.profileImageUrl,
-    'onTap': () => Get.to(
-          () => ServiceProviderProfileScreen(),
-      arguments: fixer,
-    ),
-    'onBook': () => Get.to(
-          () => CreateBookingScreen(
-        fixer: fixer,
-        fixerCategoryName: widget.sub.name,
-      ),
-    ),
-  };
 
   @override
   Widget build(BuildContext context) {

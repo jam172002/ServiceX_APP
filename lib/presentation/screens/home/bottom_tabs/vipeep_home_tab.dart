@@ -11,18 +11,17 @@ import 'package:servicex_client_app/presentation/screens/categories_n_subcategor
 import 'package:servicex_client_app/presentation/screens/service_requests/create_job_screen.dart';
 import 'package:servicex_client_app/presentation/screens/home/notifications_screen.dart';
 import 'package:servicex_client_app/presentation/screens/home/search_screen.dart';
-import 'package:servicex_client_app/presentation/screens/service_provider_profile/service_provider_profile_screen.dart';
 import 'package:servicex_client_app/presentation/screens/categories_n_subcategories/subcatagory_service_providers_screen.dart';
 import 'package:servicex_client_app/presentation/widgets/category_listview.dart';
 import 'package:servicex_client_app/presentation/widgets/populars_hor_listview.dart';
 import 'package:servicex_client_app/presentation/widgets/service_providers_hor_view.dart';
 import 'package:servicex_client_app/presentation/screens/profile/settings_screen.dart';
 import 'package:servicex_client_app/utils/constants/colors.dart';
-import 'package:servicex_client_app/utils/constants/images.dart';
 
 import '../../../../domain/models/location_model.dart';
 import '../../authentication/controller/auth_controller.dart';
 import '../../location/location_selector_screen.dart';
+import 'controller/home_tab_controller.dart';
 
 class VipeepHomeScreen extends StatefulWidget {
   const VipeepHomeScreen({super.key});
@@ -35,9 +34,6 @@ class _VipeepHomeScreenState extends State<VipeepHomeScreen> {
   final LocationController locationController = Get.find<LocationController>();
   final AuthController authController = Get.find<AuthController>();
 
-  late final Map<String, dynamic> provider;
-  late final List<Map<String, dynamic>> providers;
-
   final ScrollController _scrollController = ScrollController();
   bool _isFabVisible = true;
   double _lastOffset = 0;
@@ -46,33 +42,32 @@ class _VipeepHomeScreenState extends State<VipeepHomeScreen> {
   void initState() {
     super.initState();
 
+    // Ensure HomeController is registered
+    if (!Get.isRegistered<HomeController>()) {
+      Get.put(HomeController());
+    }
+
     // Ensure profile + location are synced once screen is ready
     WidgetsBinding.instance.addPostFrameCallback((_) async {
-      // Ensure user is loaded
       if (authController.currentUser.value == null) {
         await authController.loadCurrentUser();
       }
 
       final u = authController.currentUser.value;
       if (u != null) {
-        final profileLoc = u.location; // LocationModel (non-null ideally)
+        final profileLoc = u.location;
         if (locationController.currentLocation.value == null &&
             profileLoc!.address.trim().isNotEmpty) {
           await locationController.addLocation(profileLoc);
         }
       }
+
+      // Trigger nearby fetch with the best available location
+      final loc = locationController.currentLocation.value;
+      if (loc != null) {
+        Get.find<HomeController>().fetchNearbyFixxers(userLocation: loc);
+      }
     });
-
-    provider = {
-      "name": "M Sufyan",
-      "location": "Bahawalpur, Pakistan",
-      "rating": 4.7,
-      "image": XImages.serviceProvider,
-      "onTap": () => Get.to(() => ServiceProviderProfileScreen()),
-      "onInvite": () => debugPrint("Invite Tap: M Sufyan"),
-    };
-
-    providers = List.generate(8, (_) => provider);
 
     // Scroll listener for FAB hide/show
     const double sensitivity = 8;
@@ -104,20 +99,21 @@ class _VipeepHomeScreenState extends State<VipeepHomeScreen> {
     if (result is String && result == "pick_on_map") {
       final picked =
       await Get.to<LocationModel>(() => const LocationSelectorScreen());
-
       if (picked != null && picked.address.trim().isNotEmpty) {
         await locationController.addLocation(picked);
+        Get.find<HomeController>().fetchNearbyFixxers(userLocation: picked);
       }
       return;
     }
 
-    // 2) bottom sheet returns LocationModel (recommended)
+    // 2) bottom sheet returns LocationModel
     if (result is LocationModel) {
       await locationController.setDefaultLocation(result);
+      Get.find<HomeController>().fetchNearbyFixxers(userLocation: result);
       return;
     }
 
-    // 3) backward compatibility if bottom sheet still returns String address
+    // 3) backward compat — string address
     if (result is String && result.trim().isNotEmpty) {
       final loc = LocationModel(
         label: "Home",
@@ -140,11 +136,9 @@ class _VipeepHomeScreenState extends State<VipeepHomeScreen> {
         preferredSize: const Size.fromHeight(95),
         child: Obx(() {
           final u = authController.currentUser.value;
-
           return CustomHomeAppBar(
             name: u?.name ?? "Hi",
-            location:
-            locationController.currentLocation.value?.address ??
+            location: locationController.currentLocation.value?.address ??
                 "Select location",
             country: "Pakistan",
             imagePath: (u?.photoUrl != null && u!.photoUrl.trim().isNotEmpty)
@@ -163,7 +157,7 @@ class _VipeepHomeScreenState extends State<VipeepHomeScreen> {
               controller: _scrollController,
               child: Column(
                 children: [
-                  // Search Container
+                  // ── Search bar ──────────────────────────────────────────
                   Padding(
                     padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
                     child: GestureDetector(
@@ -171,26 +165,21 @@ class _VipeepHomeScreenState extends State<VipeepHomeScreen> {
                       child: Container(
                         width: double.infinity,
                         padding: EdgeInsets.all(
-                          MediaQuery.of(context).size.width * 0.04,
-                        ),
+                            MediaQuery.of(context).size.width * 0.04),
                         decoration: BoxDecoration(
                           color: XColors.secondaryBG,
                           borderRadius: BorderRadius.circular(8),
                           border: Border.all(
-                            color: XColors.borderColor,
-                            width: 0.7,
-                          ),
+                              color: XColors.borderColor, width: 0.7),
                         ),
                         child: Row(
                           children: [
-                            Icon(
-                              Iconsax.search_normal,
-                              color: XColors.success,
-                              size: MediaQuery.of(context).size.width * 0.05,
-                            ),
+                            Icon(Iconsax.search_normal,
+                                color: XColors.success,
+                                size: MediaQuery.of(context).size.width * 0.05),
                             SizedBox(
-                              width: MediaQuery.of(context).size.width * 0.02,
-                            ),
+                                width:
+                                MediaQuery.of(context).size.width * 0.02),
                             Flexible(
                               child: Text(
                                 'Looking For ...',
@@ -210,7 +199,7 @@ class _VipeepHomeScreenState extends State<VipeepHomeScreen> {
                   ),
                   const SizedBox(height: 20),
 
-                  // Categories Heading
+                  // ── Categories heading ──────────────────────────────────
                   XHeading(
                     title: "Categories",
                     actionText: "See all",
@@ -220,11 +209,11 @@ class _VipeepHomeScreenState extends State<VipeepHomeScreen> {
                   ),
                   const SizedBox(height: 20),
 
-                  // Categories List
+                  // ── Categories list ─────────────────────────────────────
                   const CategoryListView(),
                   const SizedBox(height: 10),
 
-                  // Banner
+                  // ── Banner ──────────────────────────────────────────────
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 16.0),
                     child: AspectRatio(
@@ -242,7 +231,7 @@ class _VipeepHomeScreenState extends State<VipeepHomeScreen> {
                   ),
                   const SizedBox(height: 20),
 
-                  // Populars
+                  // ── Populars heading ────────────────────────────────────
                   XHeading(
                     title: 'Populars',
                     actionText: 'See all',
@@ -251,22 +240,28 @@ class _VipeepHomeScreenState extends State<VipeepHomeScreen> {
                     sidePadding: 16,
                   ),
                   const SizedBox(height: 15),
+
+                  // ── Populars list (real data) ───────────────────────────
                   const PopularHomeHorizontalList(),
                   const SizedBox(height: 15),
 
-                  // Near You
+                  // ── Near You heading ────────────────────────────────────
                   XHeading(
                     title: 'Near You',
                     actionText: 'See all',
                     sidePadding: 16,
                     onActionTap: () => Get.to(
-                          () => const CatagoryServiceProviderScreen(screenTitle: 'Near You', subcategoryId: '')
+                          () => const CatagoryServiceProviderScreen(
+                          screenTitle: 'Near You', subcategoryId: ''),
                     ),
                   ),
                   const SizedBox(height: 15),
-                  ServiceProviderHorizontalList(providers: providers),
+
+                  // ── Near You list (real data) ───────────────────────────
+                  const ServiceProviderHorizontalList(),
                   const SizedBox(height: 20),
 
+                  // ── Map ─────────────────────────────────────────────────
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 16.0),
                     child: const MapViewContainer(),
@@ -278,7 +273,7 @@ class _VipeepHomeScreenState extends State<VipeepHomeScreen> {
             ),
           ),
 
-          // FAB
+          // ── FAB ─────────────────────────────────────────────────────────
           Positioned(
             bottom: kBottomNavigationBarHeight + 40,
             right: 16,
@@ -292,13 +287,10 @@ class _VipeepHomeScreenState extends State<VipeepHomeScreen> {
                   backgroundColor: XColors.primary,
                   shape: const OvalBorder(),
                   elevation: 0,
-                  onPressed: () {
-                    Get.to(
-                          () => CreateServiceJobScreen(
-                        showServiceProviderCard: false,
-                      ),
-                    );
-                  },
+                  onPressed: () => Get.to(
+                        () => CreateServiceJobScreen(
+                        showServiceProviderCard: false),
+                  ),
                   child: const Icon(Icons.work, color: Colors.white),
                 ),
               ),

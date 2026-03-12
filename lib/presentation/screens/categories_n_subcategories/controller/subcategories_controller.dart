@@ -1,9 +1,10 @@
 import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:get/get.dart';
-import 'package:servicex_client_app/domain/models/fixer_model.dart';
 import 'package:servicex_client_app/domain/models/service_subcategory.dart';
 import 'package:servicex_client_app/domain/repos/service_catalog_repo.dart';
+
+import '../../../../domain/models/fixxer_model.dart';
 
 class SubcategoriesController extends GetxController {
   final String categoryId;
@@ -23,7 +24,7 @@ class SubcategoriesController extends GetxController {
   final RxString subsError = ''.obs;
 
   // ── Fixxers state (for selected subcategory) ──────────────────
-  final RxList<FixerModel> fixxers = <FixerModel>[].obs;
+  final RxList<FixxerUser> fixxers = <FixxerUser>[].obs;  // ✅ was RxList<FixerModel>
   final RxBool fixxersLoading = false.obs;
   final RxString fixxersError = ''.obs;
   final Rxn<ServiceSubcategory> selectedSubcategory = Rxn();
@@ -42,9 +43,7 @@ class SubcategoriesController extends GetxController {
     subsError.value = '';
     _subsSub?.cancel();
 
-    _subsSub = _repo
-        .watchSubcategories(categoryId)
-        .listen(
+    _subsSub = _repo.watchSubcategories(categoryId).listen(
           (data) {
         subcategories.assignAll(data);
         subsLoading.value = false;
@@ -56,7 +55,7 @@ class SubcategoriesController extends GetxController {
     );
   }
 
-  /// Called when user taps a subcategory tile or "See all"
+  /// Called when a subcategory section mounts or user taps "See all"
   void loadFixxersForSubcategory(ServiceSubcategory sub) {
     if (selectedSubcategory.value?.id == sub.id) return;
     selectedSubcategory.value = sub;
@@ -71,9 +70,16 @@ class SubcategoriesController extends GetxController {
         .snapshots()
         .listen(
           (snap) {
-        fixxers.assignAll(
-          snap.docs.map((d) => FixerModel.fromDoc(d)).toList(),
-        );
+        // ✅ Parse with FixxerUser.fromMap instead of FixerModel.fromDoc
+        final List<FixxerUser> result = [];
+        for (final doc in snap.docs) {
+          try {
+            result.add(FixxerUser.fromMap(doc.data()));
+          } catch (e) {
+            // skip malformed docs
+          }
+        }
+        fixxers.assignAll(result);
         fixxersLoading.value = false;
       },
       onError: (e) {
@@ -91,12 +97,28 @@ class SubcategoriesController extends GetxController {
   }
 }
 
-// ── Extension so catalog repo can also stream subcategories ──────
+// ─────────────────────────────────────────────────────────────────────────────
+// ServiceCatalogRepo extensions
+// ─────────────────────────────────────────────────────────────────────────────
+
+/// Streams subcategories filtered by [categoryId] — used by SubcategoriesController
 extension SubWatch on ServiceCatalogRepo {
   Stream<List<ServiceSubcategory>> watchSubcategories(String categoryId) {
     return FirebaseFirestore.instance
         .collection('service_subcategories')
         .where('categoryId', isEqualTo: categoryId)
+        .orderBy('name')
+        .snapshots()
+        .map((snap) =>
+        snap.docs.map((doc) => ServiceSubcategory.fromDoc(doc)).toList());
+  }
+}
+
+/// Streams ALL subcategories — used by CategoryController for name lookups
+extension AllSubWatch on ServiceCatalogRepo {
+  Stream<List<ServiceSubcategory>> watchAllSubcategories() {
+    return FirebaseFirestore.instance
+        .collection('service_subcategories')
         .orderBy('name')
         .snapshots()
         .map((snap) =>

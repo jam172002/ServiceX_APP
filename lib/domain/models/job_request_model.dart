@@ -139,6 +139,8 @@ class JobRequestModel {
       updatedAt: (json['updatedAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
     );
   }
+
+
 }
 
 // ── JobStatus helpers ─────────────────────────────────────────────
@@ -169,4 +171,5 @@ JobStatus jobStatusFromString(String s) {
     case 'cancelled':   return JobStatus.cancelled;
     default:            return JobStatus.pending;
   }
+
 }
