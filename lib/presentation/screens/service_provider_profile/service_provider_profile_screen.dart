@@ -1,8 +1,7 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:iconsax/iconsax.dart';
 import 'package:get/get.dart';
-import 'package:servicex_client_app/domain/models/fixer_model.dart';
+import 'package:servicex_client_app/presentation/screens/categories_n_subcategories/controller/category_controller.dart';
 import 'package:servicex_client_app/presentation/widgets/simple_alert_dialog.dart';
 import 'package:servicex_client_app/presentation/widgets/service_provider_profile_header.dart';
 import 'package:servicex_client_app/presentation/widgets/expandable_text.dart';
@@ -11,6 +10,7 @@ import 'package:servicex_client_app/presentation/widgets/service_provider_profil
 import 'package:servicex_client_app/presentation/screens/chat/single_chat_screen.dart';
 import 'package:servicex_client_app/utils/constants/colors.dart';
 
+import '../../../domain/models/fixer_model.dart';
 import '../../../services/chat_notification_service.dart';
 import '../chat/controller/chat_controller.dart';
 
@@ -24,7 +24,8 @@ class ServiceProviderProfileScreen extends StatefulWidget {
 
 class _ServiceProviderProfileScreenState
     extends State<ServiceProviderProfileScreen> {
-  FixerModel? get fixer =>
+  // Accept FixerModel from Get.arguments
+  FixerModel? get fixxer =>
       Get.arguments is FixerModel ? Get.arguments as FixerModel : null;
 
   final ScrollController _scrollController = ScrollController();
@@ -33,51 +34,36 @@ class _ServiceProviderProfileScreenState
   bool isFavourite = false;
   bool _isChatLoading = false;
 
-  List<String> _subcategoryNames = [];
+  // Resolved names from CategoryController (already loaded app-wide)
   String _categoryName = '';
+  List<String> _subcategoryNames = [];
 
-  // ── Firestore name resolution ──────────────────────────────────
+  // ── Resolve category/subcategory names ────────────────────────────────────
 
-  Future<void> _resolveNames(FixerModel f) async {
+  void _resolveNames(FixerModel f) {
+    // Use CategoryController which is already streaming — no extra Firestore calls
     try {
-      final futures = <Future>[];
+      final catCtrl = Get.find<CategoryController>();
 
-      futures.add(
-        FirebaseFirestore.instance
-            .collection('service_categories')
-            .doc(f.mainCategory)
-            .get()
-            .then((doc) {
-          if (doc.exists && mounted) {
-            setState(() =>
-            _categoryName =
-            (doc.data()?['name'] ?? f.mainCategory) as String);
-          }
-        }),
-      );
+      final catName = catCtrl.categoryName(f.mainCategory);
 
-      if (f.subCategories.isNotEmpty) {
-        futures.add(
-          Future.wait(
-            f.subCategories.map((id) => FirebaseFirestore.instance
-                .collection('service_subcategories')
-                .doc(id)
-                .get()),
-          ).then((docs) {
-            final names = docs
-                .where((d) => d.exists)
-                .map((d) => (d.data()?['name'] ?? d.id) as String)
-                .toList();
-            if (mounted) setState(() => _subcategoryNames = names);
-          }),
-        );
+      final subNames = f.subCategories
+          .map((id) => catCtrl.subcategoryName(id))
+          .where((n) => n.isNotEmpty)
+          .toList();
+
+      if (mounted) {
+        setState(() {
+          _categoryName = catName;
+          _subcategoryNames = subNames;
+        });
       }
-
-      await Future.wait(futures);
-    } catch (_) {}
+    } catch (_) {
+      // CategoryController not yet ready — names stay empty, IDs shown as fallback
+    }
   }
 
-  // ── Favourite toggle ───────────────────────────────────────────
+  // ── Favourite toggle ──────────────────────────────────────────────────────
 
   void toggleFavourite() {
     setState(() => isFavourite = !isFavourite);
@@ -91,13 +77,10 @@ class _ServiceProviderProfileScreenState
     );
   }
 
-  // ── Open chat ──────────────────────────────────────────────────
+  // ── Open chat ─────────────────────────────────────────────────────────────
 
   Future<void> _openChat() async {
-    final f = fixer;
-
-    debugPrint('▶ fixer=${f?.uid} name=${f?.fullName}');
-    debugPrint('▶ arguments=${Get.arguments?.runtimeType}');
+    final f = fixxer;
 
     if (f == null || f.uid.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -120,7 +103,7 @@ class _ServiceProviderProfileScreenState
         otherId: f.uid,
         otherName: f.fullName,
         otherAvatar: f.profileImageUrl,
-        otherFcmToken: f.fcmToken,
+        otherFcmToken: null,
         myFcmToken: myToken,
       );
 
@@ -134,11 +117,10 @@ class _ServiceProviderProfileScreenState
         isServiceProvider: false,
       ));
     } catch (e, stack) {
-      debugPrint('▶ CHAT ERROR: $e');
-      debugPrint('▶ STACK: $stack');
+      debugPrint('▶ CHAT ERROR: $e\n$stack');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('$e')),  // shows actual error message
+          SnackBar(content: Text('$e')),
         );
       }
     } finally {
@@ -146,12 +128,12 @@ class _ServiceProviderProfileScreenState
     }
   }
 
-  // ── Lifecycle ──────────────────────────────────────────────────
+  // ── Lifecycle ─────────────────────────────────────────────────────────────
 
   @override
   void initState() {
     super.initState();
-    final f = fixer;
+    final f = fixxer;
     if (f != null) _resolveNames(f);
 
     const double sensitivity = 8;
@@ -173,11 +155,11 @@ class _ServiceProviderProfileScreenState
     super.dispose();
   }
 
-  // ── Build ──────────────────────────────────────────────────────
+  // ── Build ─────────────────────────────────────────────────────────────────
 
   @override
   Widget build(BuildContext context) {
-    final f = fixer;
+    final f = fixxer;
 
     return Scaffold(
       body: Stack(
@@ -189,9 +171,9 @@ class _ServiceProviderProfileScreenState
                 ServiceProviderProfileHeader(
                   bannerUrl: f?.bannerImageUrl,
                   avatarUrl: f?.profileImageUrl,
-                  name: f?.fullName ?? 'Muhammad Sufyan',
-                  location: f?.address.isNotEmpty == true
-                      ? f!.address
+                  name: f?.fullName ?? '–',
+                  location: f?.location.address.isNotEmpty == true
+                      ? f!.location.address
                       : 'Location not set',
                 ),
                 const SizedBox(height: 75),
@@ -203,82 +185,98 @@ class _ServiceProviderProfileScreenState
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // ── Rate / Category / Experience ─────────────
+                        // ── Rate / Category row ───────────────────────────
                         Row(
                           children: [
-                            Text(
-                              '\$${f?.hourlyRate.toStringAsFixed(0) ?? '–'}',
-                              style: const TextStyle(
-                                fontSize: 13,
-                                color: Colors.green,
-                                fontWeight: FontWeight.w500,
+                            if (f?.hourlyRate != null) ...[
+                              Text(
+                                'PKR ${f!.hourlyRate.toStringAsFixed(0)}',
+                                style: const TextStyle(
+                                  fontSize: 13,
+                                  color: Colors.green,
+                                  fontWeight: FontWeight.w500,
+                                ),
                               ),
-                            ),
-                            const SizedBox(width: 4),
-                            const Text(
-                              '/hour',
-                              style: TextStyle(
+                              const SizedBox(width: 4),
+                              const Text(
+                                '/hour',
+                                style: TextStyle(
                                   fontSize: 11,
                                   color: XColors.black,
-                                  fontWeight: FontWeight.w300),
-                            ),
-                            const SizedBox(width: 12),
-                            Container(
-                                height: 10,
-                                width: 1.5,
-                                color: XColors.primary),
-                            const SizedBox(width: 12),
+                                  fontWeight: FontWeight.w300,
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Container(
+                                  height: 10, width: 1.5, color: XColors.primary),
+                              const SizedBox(width: 12),
+                            ],
                             Text(
                               _categoryName.isNotEmpty
                                   ? _categoryName
                                   : (f?.mainCategory ?? '–'),
                               style: const TextStyle(
-                                  fontSize: 11,
-                                  color: XColors.black,
-                                  fontWeight: FontWeight.w300),
-                            ),
-                            if (f != null && f.yearsOfExperience > 0) ...[
-                              const SizedBox(width: 12),
-                              Container(
-                                  height: 10,
-                                  width: 1.5,
-                                  color: XColors.primary),
-                              const SizedBox(width: 12),
-                              Text(
-                                '${f.yearsOfExperience} ${f.yearsOfExperience == 1 ? 'Year' : 'Years'} of Experience',
-                                style: const TextStyle(
-                                    fontSize: 11,
-                                    color: XColors.black,
-                                    fontWeight: FontWeight.w300),
+                                fontSize: 11,
+                                color: XColors.black,
+                                fontWeight: FontWeight.w300,
                               ),
-                            ],
+                            ),
                           ],
                         ),
 
                         const SizedBox(height: 6),
+
+                        // ── Rating row ────────────────────────────────────
+                        if (f != null) ...[
+                          Row(
+                            children: [
+                              const Icon(Iconsax.star5,
+                                  color: XColors.warning, size: 15),
+                              const SizedBox(width: 4),
+                              Text(
+                                f.rating.toStringAsFixed(1),
+                                style: const TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                '(${f.totalReviews} ${f.totalReviews == 1 ? 'review' : 'reviews'})',
+                                style: const TextStyle(
+                                  fontSize: 11,
+                                  color: XColors.grey,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 6),
+                        ],
+
+                        // ── Location row ──────────────────────────────────
                         Row(
                           mainAxisSize: MainAxisSize.min,
-                          mainAxisAlignment: MainAxisAlignment.end,
                           children: [
                             const Icon(Icons.location_on,
                                 color: XColors.grey, size: 16),
                             const SizedBox(width: 4),
                             Flexible(
                               child: Text(
-                                  f?.address.isNotEmpty == true
-                                      ? f!.address
-                                      : 'Location not set',
+                                f?.location.address.isNotEmpty == true
+                                    ? f!.location.address
+                                    : 'Location not set',
                                 maxLines: 2,
                                 overflow: TextOverflow.ellipsis,
-                                textAlign: TextAlign.end,
                                 style: const TextStyle(
                                     color: XColors.grey, fontSize: 12),
                               ),
                             ),
                           ],
                         ),
+
                         const SizedBox(height: 6),
-                        // ── Available days ────────────────────────────
+
+                        // ── Available days ────────────────────────────────
                         if (f != null && f.availableDays.isNotEmpty)
                           Wrap(
                             spacing: 8,
@@ -287,12 +285,14 @@ class _ServiceProviderProfileScreenState
                                   .map((day) {
                                 final isAvailable = f.availableDays.any(
                                       (d) => d.toLowerCase().startsWith(
-                                      day.toLowerCase().substring(0, 3)),
+                                    day.toLowerCase(),
+                                  ),
                                 );
                                 return WorkingDayContainer(
                                   day: day,
-                                  backgroundColor:
-                                  isAvailable ? Colors.green : Colors.black54,
+                                  backgroundColor: isAvailable
+                                      ? Colors.green
+                                      : Colors.black26,
                                 );
                               }),
                             ],
@@ -307,15 +307,16 @@ class _ServiceProviderProfileScreenState
 
                         const SizedBox(height: 6),
 
-                        // ── Languages ─────────────────────────────────
+                        // ── Languages ─────────────────────────────────────
                         Row(
                           children: [
                             const Text(
                               'Languages Spoken:',
                               style: TextStyle(
-                                  fontSize: 11,
-                                  color: XColors.black,
-                                  fontWeight: FontWeight.w500),
+                                fontSize: 11,
+                                color: XColors.black,
+                                fontWeight: FontWeight.w500,
+                              ),
                             ),
                             const SizedBox(width: 12),
                             Text(
@@ -323,16 +324,17 @@ class _ServiceProviderProfileScreenState
                                   ? f.languages.join(', ')
                                   : '–',
                               style: const TextStyle(
-                                  fontSize: 11,
-                                  color: XColors.black,
-                                  fontWeight: FontWeight.w300),
+                                fontSize: 11,
+                                color: XColors.black,
+                                fontWeight: FontWeight.w300,
+                              ),
                             ),
                           ],
                         ),
 
                         const SizedBox(height: 20),
 
-                        // ── Bio ───────────────────────────────────────
+                        // ── Bio ───────────────────────────────────────────
                         const Text(
                           'Bio',
                           style: TextStyle(
@@ -348,7 +350,7 @@ class _ServiceProviderProfileScreenState
 
                         const SizedBox(height: 20),
 
-                        // ── Specializations ───────────────────────────
+                        // ── Specializations ───────────────────────────────
                         if (f != null && f.subCategories.isNotEmpty)
                           ExpandableChips(
                             title: 'Specializes',
@@ -359,7 +361,7 @@ class _ServiceProviderProfileScreenState
 
                         const SizedBox(height: 20),
 
-                        const ServiceProviderProfileBottomSection(),
+                        ServiceProviderProfileBottomSection(fixxer: f),
                         const SizedBox(height: 20),
                       ],
                     ),
@@ -369,7 +371,7 @@ class _ServiceProviderProfileScreenState
             ),
           ),
 
-          // ── Back + Favourite ──────────────────────────────────
+          // ── Back + Favourite buttons ──────────────────────────────────────
           Positioned(
             top: kToolbarHeight,
             left: 16,
@@ -399,8 +401,7 @@ class _ServiceProviderProfileScreenState
                     ),
                     child: Icon(
                       isFavourite ? Icons.favorite : Iconsax.heart,
-                      color:
-                      isFavourite ? Colors.redAccent : Colors.black87,
+                      color: isFavourite ? Colors.redAccent : Colors.black87,
                       size: 20,
                     ),
                   ),
@@ -411,13 +412,13 @@ class _ServiceProviderProfileScreenState
         ],
       ),
 
-      // ── Chat FAB ───────────────────────────────────────────────
+      // ── Chat FAB ──────────────────────────────────────────────────────────
       floatingActionButton: AnimatedSlide(
         duration: const Duration(milliseconds: 220),
         offset: _isFabVisible ? Offset.zero : const Offset(0, 2),
         child: AnimatedOpacity(
           duration: const Duration(milliseconds: 200),
-          opacity: _isFabVisible ? 1 : 0,
+          opacity: _isFabVisible ? 1.0 : 0.0,
           child: FloatingActionButton(
             backgroundColor: XColors.primary,
             shape: const OvalBorder(),
@@ -441,7 +442,7 @@ class _ServiceProviderProfileScreenState
   }
 }
 
-// ── WorkingDayContainer ───────────────────────────────────────────
+// ── WorkingDayContainer ───────────────────────────────────────────────────────
 
 class WorkingDayContainer extends StatelessWidget {
   final String day;

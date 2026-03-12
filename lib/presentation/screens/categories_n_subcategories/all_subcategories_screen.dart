@@ -7,7 +7,7 @@ import 'package:servicex_client_app/presentation/widgets/common_appbar.dart';
 import 'package:servicex_client_app/presentation/widgets/search_filter_container.dart';
 import 'package:servicex_client_app/presentation/widgets/single_subcatagory.dart';
 
-import '../../../domain/models/fixxer_model.dart';
+import '../../../domain/models/fixer_model.dart';
 
 class SubcategoriesScreen extends StatelessWidget {
   final String categoryId;
@@ -100,8 +100,8 @@ class _SubcategorySection extends StatefulWidget {
 }
 
 class _SubcategorySectionState extends State<_SubcategorySection> {
-  // ✅ Now List<FixxerUser> directly — no more Map conversion
-  final RxList<FixxerUser> _providers = <FixxerUser>[].obs;
+  // ✅ Now List<FixerModel> directly — no more Map conversion
+  final RxList<FixerModel> _providers = <FixerModel>[].obs;
   final RxBool _loading = true.obs;
 
   @override
@@ -119,7 +119,7 @@ class _SubcategorySectionState extends State<_SubcategorySection> {
 
   void _syncProviders() {
     if (widget.controller.selectedSubcategory.value?.id == widget.sub.id) {
-      _providers.assignAll(widget.controller.fixxers as Iterable<FixxerUser>);
+      _providers.assignAll(widget.controller.fixxers as Iterable<FixerModel>);
       _loading.value = widget.controller.fixxersLoading.value;
     }
   }

@@ -2,7 +2,8 @@ import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 
-import '../models/fixxer_model.dart';
+import '../models/fixer_model.dart';
+
 
 class FixxerRepo {
   final FirebaseFirestore _db;
@@ -19,23 +20,23 @@ class FixxerRepo {
 
   // ── Read ────────────────────────────────────────────────────────
 
-  Future<FixxerUser?> getFixxer(String uid) async {
+  Future<FixerModel?> getFixxer(String uid) async {
     final snap = await _doc(uid).get();
     if (!snap.exists || snap.data() == null) return null;
-    return FixxerUser.fromMap(snap.data()!);
+    return FixerModel.fromMap(snap.data()!);
   }
 
   /// Stream a single fixer's doc — UI rebuilds automatically on change
-  Stream<FixxerUser?> streamFixxer(String uid) {
+  Stream<FixerModel?> streamFixxer(String uid) {
     return _doc(uid).snapshots().map((snap) {
       if (!snap.exists || snap.data() == null) return null;
-      return FixxerUser.fromMap(snap.data()!);
+      return FixerModel.fromMap(snap.data()!);
     });
   }
 
   // ── Write ───────────────────────────────────────────────────────
 
-  Future<void> createFixxer(FixxerUser user) async {
+  Future<void> createFixxer(FixerModel user) async {
     await _doc(user.uid).set(user.toMap(), SetOptions(merge: true));
   }
 
@@ -62,7 +63,7 @@ class FixxerRepo {
 
   // ── Queries ─────────────────────────────────────────────────────
 
-  Future<List<FixxerUser>> getFixxersByCategory(String categoryId) async {
+  Future<List<FixerModel>> getFixxersByCategory(String categoryId) async {
     final snap = await _db
         .collection('fixxers')
         .where('mainCategory', isEqualTo: categoryId)
@@ -70,7 +71,7 @@ class FixxerRepo {
     return _mapDocs(snap);
   }
 
-  Future<List<FixxerUser>> getFixxersBySubcategory(String subcategoryId) async {
+  Future<List<FixerModel>> getFixxersBySubcategory(String subcategoryId) async {
     final snap = await _db
         .collection('fixxers')
         .where('subCategories', arrayContains: subcategoryId)
@@ -80,7 +81,7 @@ class FixxerRepo {
 
   /// Popular fixxers — reads IDs from 'popular' collection,
   /// then fetches the matching fixxer docs in chunks of 10.
-  Future<List<FixxerUser>> getPopularFixxers() async {
+  Future<List<FixerModel>> getPopularFixxers() async {
     final popularSnap = await _db.collection('popular').get();
     if (popularSnap.docs.isEmpty) return [];
 
@@ -89,7 +90,7 @@ class FixxerRepo {
         .where((id) => id.isNotEmpty)
         .toList();
 
-    final results = <FixxerUser>[];
+    final results = <FixerModel>[];
     for (int i = 0; i < ids.length; i += 10) {
       final chunk = ids.sublist(i, (i + 10).clamp(0, ids.length));
       final snap = await _db
@@ -98,12 +99,12 @@ class FixxerRepo {
           .get();
       results.addAll(_mapDocs(snap));
     }
-    results.sort((a, b) => (b.hourlyRate ?? 0).compareTo(a.hourlyRate ?? 0));
+    results.sort((a, b) => (b.hourlyRate).compareTo(a.hourlyRate));
     return results;
   }
 
   /// All fixxers — used for client-side nearby distance filtering
-  Future<List<FixxerUser>> getAllFixxers() async {
+  Future<List<FixerModel>> getAllFixxers() async {
     final snap = await _db.collection('fixxers').get();
     return _mapDocs(snap);
   }
@@ -157,11 +158,11 @@ class FixxerRepo {
 
   // ── Helper ───────────────────────────────────────────────────────
 
-  List<FixxerUser> _mapDocs(QuerySnapshot<Map<String, dynamic>> snap) {
-    final results = <FixxerUser>[];
+  List<FixerModel> _mapDocs(QuerySnapshot<Map<String, dynamic>> snap) {
+    final results = <FixerModel>[];
     for (final doc in snap.docs) {
       try {
-        results.add(FixxerUser.fromMap(doc.data()));
+        results.add(FixerModel.fromMap(doc.data()));
       } catch (e) {
         // skip malformed docs silently
       }

@@ -6,7 +6,7 @@ import 'package:servicex_client_app/presentation/widgets/service_provider_ver_ca
 import 'package:servicex_client_app/utils/constants/colors.dart';
 import 'package:servicex_client_app/utils/constants/images.dart';
 
-import '../../domain/models/fixxer_model.dart';
+import '../../domain/models/fixer_model.dart';
 
 class ServiceProviderHorizontalList extends StatelessWidget {
   final double height;
@@ -72,7 +72,7 @@ class ServiceProviderHorizontalList extends StatelessWidget {
             itemCount: fixxers.length,
             separatorBuilder: (_, __) => const SizedBox(width: 16),
             itemBuilder: (_, i) {
-              final FixxerUser fixxer = fixxers[i];
+              final FixerModel fixxer = fixxers[i];
               return ServiceProviderVerCard(
                 name: fixxer.fullName,
                 location: fixxer.location.address.isNotEmpty

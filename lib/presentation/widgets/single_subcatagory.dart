@@ -5,13 +5,13 @@ import 'package:servicex_client_app/presentation/widgets/service_provider_ver_ca
 import 'package:servicex_client_app/presentation/widgets/simple_heading.dart';
 import 'package:servicex_client_app/utils/constants/images.dart';
 
-import '../../domain/models/fixxer_model.dart';
+import '../../domain/models/fixer_model.dart';
 
 class SingleSubCategory extends StatelessWidget {
   final String title;
   final String actionText;
   final VoidCallback onActionTap;
-  final List<FixxerUser> providers; // ✅ was List<Map<String, dynamic>>
+  final List<FixerModel> providers;
   final bool isLoading;
 
   const SingleSubCategory({
@@ -57,7 +57,7 @@ class SingleSubCategory extends StatelessWidget {
 // ── Horizontal list (uses same ServiceProviderVerCard as home) ────
 
 class _FixxerHorizontalList extends StatelessWidget {
-  final List<FixxerUser> fixxers;
+  final List<FixerModel> fixxers;
   const _FixxerHorizontalList({required this.fixxers});
 
   @override
@@ -73,7 +73,7 @@ class _FixxerHorizontalList extends StatelessWidget {
           itemCount: display.length,
           separatorBuilder: (_, __) => const SizedBox(width: 16),
           itemBuilder: (_, i) {
-            final FixxerUser fixxer = display[i];
+            final FixerModel fixxer = display[i];
             return ServiceProviderVerCard(
               name: fixxer.fullName,
               location: fixxer.location.address.isNotEmpty

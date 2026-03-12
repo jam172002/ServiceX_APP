@@ -5,7 +5,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-import '../../../../../domain/models/fixxer_model.dart';
+import '../../../../../domain/models/fixer_model.dart';
 import '../../../../../domain/models/location_model.dart';
 import '../../../../../domain/models/service_subcategory.dart';
 import '../../../../../domain/repos/fixxer_repo.dart';
@@ -101,7 +101,7 @@ class HomeController extends GetxController {
         _auth = auth ?? FirebaseAuth.instance;
 
   // ── Current fixer user (fixer app) ───────────────────────────────
-  final Rxn<FixxerUser> user = Rxn<FixxerUser>();
+  final Rxn<FixerModel> user = Rxn<FixerModel>();
   final RxBool isLoading = false.obs;
 
   // ── Jobs (fixer app) ─────────────────────────────────────────────
@@ -115,7 +115,7 @@ class HomeController extends GetxController {
   final RxBool isLoadingPopular = false.obs;
 
   // ── Nearby fixxers (client app) ──────────────────────────────────
-  final RxList<FixxerUser> nearbyFixxers = <FixxerUser>[].obs;
+  final RxList<FixerModel> nearbyFixxers = <FixerModel>[].obs;
   final RxBool isLoadingNearby = false.obs;
 
   StreamSubscription? _openJobsSub;
@@ -272,10 +272,10 @@ class HomeController extends GetxController {
           if (fixerLat == null || fixerLng == null) continue;
           if (fixerLat == 0 && fixerLng == 0) continue;
 
-          final distKm = _distanceKm(userLat!, userLng!, fixerLat, fixerLng);
+          final distKm = _distanceKm(userLat, userLng, fixerLat, fixerLng);
           if (distKm <= 20.0) {
             nearby.add(_FixxerWithDistance(
-              fixxer: FixxerUser.fromMap(data),
+              fixxer: FixerModel.fromMap(data),
               distanceKm: distKm,
             ));
           }
@@ -296,29 +296,7 @@ class HomeController extends GetxController {
     }
   }
 
-  // ── Shared: fetch fixxers by list of IDs ──────────────────────────
-  // Firestore 'whereIn' max = 10, so we chunk the list.
 
-  Future<List<FixxerUser>> _fetchFixxersByIds(List<String> ids) async {
-    final results = <FixxerUser>[];
-    for (int i = 0; i < ids.length; i += 10) {
-      final chunk = ids.sublist(i, min(i + 10, ids.length));
-      try {
-        final snap = await _db
-            .collection('fixxers')
-            .where(FieldPath.documentId, whereIn: chunk)
-            .get();
-        for (final doc in snap.docs) {
-          try {
-            results.add(FixxerUser.fromMap(doc.data()));
-          } catch (_) {}
-        }
-      } catch (e) {
-        debugPrint('▶ _fetchFixxersByIds chunk error: $e');
-      }
-    }
-    return results;
-  }
 
   // ── Jobs streams (fixer app) ──────────────────────────────────────
 
@@ -397,7 +375,7 @@ class HomeController extends GetxController {
 
 // Internal helper — not exposed outside this file
 class _FixxerWithDistance {
-  final FixxerUser fixxer;
+  final FixerModel fixxer;
   final double distanceKm;
   _FixxerWithDistance({required this.fixxer, required this.distanceKm});
 }

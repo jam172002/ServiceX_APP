@@ -3,8 +3,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:get/get.dart';
 import 'package:servicex_client_app/domain/models/service_subcategory.dart';
 import 'package:servicex_client_app/domain/repos/service_catalog_repo.dart';
+import '../../../../domain/models/fixer_model.dart';
 
-import '../../../../domain/models/fixxer_model.dart';
 
 class SubcategoriesController extends GetxController {
   final String categoryId;
@@ -24,7 +24,7 @@ class SubcategoriesController extends GetxController {
   final RxString subsError = ''.obs;
 
   // ── Fixxers state (for selected subcategory) ──────────────────
-  final RxList<FixxerUser> fixxers = <FixxerUser>[].obs;  // ✅ was RxList<FixerModel>
+  final RxList<FixerModel> fixxers = <FixerModel>[].obs;  // ✅ was RxList<FixerModel>
   final RxBool fixxersLoading = false.obs;
   final RxString fixxersError = ''.obs;
   final Rxn<ServiceSubcategory> selectedSubcategory = Rxn();
@@ -70,11 +70,11 @@ class SubcategoriesController extends GetxController {
         .snapshots()
         .listen(
           (snap) {
-        // ✅ Parse with FixxerUser.fromMap instead of FixerModel.fromDoc
-        final List<FixxerUser> result = [];
+        // ✅ Parse with FixerModel.fromMap instead of FixerModel.fromDoc
+        final List<FixerModel> result = [];
         for (final doc in snap.docs) {
           try {
-            result.add(FixxerUser.fromMap(doc.data()));
+            result.add(FixerModel.fromMap(doc.data()));
           } catch (e) {
             // skip malformed docs
           }

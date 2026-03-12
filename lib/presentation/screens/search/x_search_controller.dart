@@ -5,7 +5,8 @@ import 'package:servicex_client_app/domain/models/service_category.dart';
 import 'package:servicex_client_app/domain/models/service_subcategory.dart';
 import 'package:servicex_client_app/domain/repos/repo_providers.dart';
 
-import '../../../domain/models/fixxer_model.dart';
+import '../../../domain/models/fixer_model.dart';
+
 
 class SearchFilters {
   final double? minRate;
@@ -62,7 +63,7 @@ class XSearchController extends GetxController {
   // ── Raw data ─────────────────────────────────────────────────────────────
   final RxList<ServiceCategory> _cats = <ServiceCategory>[].obs;
   final RxList<ServiceSubcategory> _subs = <ServiceSubcategory>[].obs;
-  final RxList<FixxerUser> _fixxers = <FixxerUser>[].obs;
+  final RxList<FixerModel> _fixxers = <FixerModel>[].obs;
 
   // ── Filters ───────────────────────────────────────────────────────────────
   final Rx<SearchFilters> activeFilters = SearchFilters.empty.obs;
@@ -94,7 +95,7 @@ class XSearchController extends GetxController {
         snap.docs.map((d) {
           final data = d.data();
           data['uid'] = d.id;
-          return FixxerUser.fromMap(data);
+          return FixerModel.fromMap(data);
         }).toList(),
       );
       isLoadingFixxers.value = false;
@@ -136,7 +137,7 @@ class XSearchController extends GetxController {
     return results;
   }
 
-  List<FixxerUser> get filteredFixxers {
+  List<FixerModel> get filteredFixxers {
     final q = searchQuery.value.trim().toLowerCase();
     final f = activeFilters.value;
 
@@ -146,15 +147,15 @@ class XSearchController extends GetxController {
       // Query match
       final matchesQuery = q.isEmpty ||
           fx.fullName.toLowerCase().contains(q) ||
-          (fx.bio?.toLowerCase().contains(q) ?? false) ||
-          (fx.mainCategory?.toLowerCase().contains(q) ?? false) ||
+          (fx.bio.toLowerCase().contains(q)) ||
+          (fx.mainCategory.toLowerCase().contains(q)) ||
           fx.subCategories.any((s) => s.toLowerCase().contains(q));
 
       if (!matchesQuery) return false;
 
       // Rate filter
-      if (f.minRate != null && (fx.hourlyRate ?? 0) < f.minRate!) return false;
-      if (f.maxRate != null && (fx.hourlyRate ?? double.infinity) > f.maxRate!) return false;
+      if (f.minRate != null && (fx.hourlyRate) < f.minRate!) return false;
+      if (f.maxRate != null && (fx.hourlyRate) > f.maxRate!) return false;
 
       // Rating filter
       if (f.minRating != null && fx.rating < f.minRating!) return false;

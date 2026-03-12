@@ -9,8 +9,7 @@ import 'package:servicex_client_app/presentation/screens/service_provider_profil
 import 'package:servicex_client_app/presentation/widgets/common_appbar.dart';
 import 'package:servicex_client_app/presentation/widgets/search_filter_container.dart';
 import 'package:servicex_client_app/utils/constants/colors.dart';
-
-import '../../../domain/models/fixxer_model.dart';
+import '../../../domain/models/fixer_model.dart';
 import '../categories_n_subcategories/subcatagory_service_providers_screen.dart';
 import 'x_search_controller.dart';
 import 'search_filter_sheet.dart';
@@ -372,7 +371,7 @@ class _ServiceTile extends StatelessWidget {
 // ── Fixxer tile ───────────────────────────────────────────────────────────────
 
 class _FixxerTile extends StatelessWidget {
-  final FixxerUser fixxer;
+  final FixerModel fixxer;
   const _FixxerTile({required this.fixxer});
 
   @override
@@ -389,11 +388,10 @@ class _FixxerTile extends StatelessWidget {
           CircleAvatar(
             radius: 24,
             backgroundColor: XColors.lightTint.withValues(alpha: 0.5),
-            child: fixxer.profileImageUrl != null &&
-                fixxer.profileImageUrl!.isNotEmpty
+            child: fixxer.profileImageUrl.isNotEmpty
                 ? ClipOval(
               child: CachedNetworkImage(
-                imageUrl: fixxer.profileImageUrl!,
+                imageUrl: fixxer.profileImageUrl,
                 width: 48,
                 height: 48,
                 fit: BoxFit.cover,
@@ -447,15 +445,14 @@ class _FixxerTile extends StatelessWidget {
                   ),
                 ],
               ),
-              if (fixxer.hourlyRate != null)
-                Text(
-                  'PKR ${fixxer.hourlyRate!.toInt()}/hr',
-                  style: const TextStyle(
-                    fontSize: 11,
-                    color: XColors.primary,
-                    fontWeight: FontWeight.w500,
-                  ),
+              Text(
+                'PKR ${fixxer.hourlyRate.toInt()}/hr',
+                style: const TextStyle(
+                  fontSize: 11,
+                  color: XColors.primary,
+                  fontWeight: FontWeight.w500,
                 ),
+              ),
             ],
           ),
         ],
