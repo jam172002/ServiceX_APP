@@ -4,7 +4,7 @@ enum Gender { male, female, other }
 
 enum JobStatus { newRequest, underReview, accepted, inProgress, completed, cancelled, ongoing, pending }
 
-enum BookingStatus { booked, pending, completed, cancelled }
+enum BookingStatus { booked, pending, completed, cancelled, accepted, inProgress }
 
 enum PaymentMethod { card, mobileTransfer }
 

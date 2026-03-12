@@ -10,7 +10,10 @@ class BookingModel {
 
   // ── Participants ──────────────────────────────────────────────
   final String clientId;
-  final String fixerId; // service provider UID
+  final String fixerId;       // service provider UID
+  // Denormalized at creation — zero extra reads on list screens
+  final String fixerName;
+  final String fixerImageUrl;
 
   // ── Category (denormalized for light queries) ─────────────────
   final String categoryId;
@@ -40,6 +43,10 @@ class BookingModel {
   // ── Status ────────────────────────────────────────────────────
   final BookingStatus status;
 
+  // ── Review (written after completion) ────────────────────────
+  final double? rating;
+  final String? review;
+
   // ── Timestamps ────────────────────────────────────────────────
   final DateTime createdAt;
   final DateTime updatedAt;
@@ -48,6 +55,8 @@ class BookingModel {
     required this.id,
     required this.clientId,
     required this.fixerId,
+    required this.fixerName,
+    required this.fixerImageUrl,
     required this.categoryId,
     required this.categoryName,
     required this.subcategoryId,
@@ -62,6 +71,8 @@ class BookingModel {
     required this.budgetMax,
     required this.paymentMethod,
     required this.status,
+    this.rating,
+    this.review,
     required this.createdAt,
     required this.updatedAt,
   });
@@ -70,6 +81,8 @@ class BookingModel {
     'id': id,
     'clientId': clientId,
     'fixerId': fixerId,
+    'fixerName': fixerName,
+    'fixerImageUrl': fixerImageUrl,
     'categoryId': categoryId,
     'categoryName': categoryName,
     'subcategoryId': subcategoryId,
@@ -84,6 +97,8 @@ class BookingModel {
     'budgetMax': budgetMax,
     'paymentMethod': paymentMethod,
     'status': status.name,
+    if (rating != null) 'rating': rating,
+    if (review != null) 'review': review,
     'createdAt': Timestamp.fromDate(createdAt),
     'updatedAt': Timestamp.fromDate(updatedAt),
   };
@@ -92,6 +107,8 @@ class BookingModel {
     id: map['id'] as String,
     clientId: map['clientId'] as String,
     fixerId: map['fixerId'] as String,
+    fixerName: (map['fixerName'] as String?) ?? '',
+    fixerImageUrl: (map['fixerImageUrl'] as String?) ?? '',
     categoryId: map['categoryId'] as String,
     categoryName: map['categoryName'] as String,
     subcategoryId: map['subcategoryId'] as String,
@@ -109,6 +126,8 @@ class BookingModel {
           (e) => e.name == map['status'],
       orElse: () => BookingStatus.pending,
     ),
+    rating: (map['rating'] as num?)?.toDouble(),
+    review: map['review'] as String?,
     createdAt: (map['createdAt'] as Timestamp).toDate(),
     updatedAt: (map['updatedAt'] as Timestamp).toDate(),
   );

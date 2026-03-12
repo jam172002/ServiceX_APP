@@ -7,6 +7,7 @@ import 'package:servicex_client_app/app_bindings.dart';
 import 'package:servicex_client_app/presentation/screens/splash/splash_router.dart';
 import 'package:servicex_client_app/services/chat_notification_service.dart';
 
+import 'data_seeder/app_data_seeder.dart';
 import 'firebase_options.dart';
 
 void main() async {
@@ -22,6 +23,6 @@ void main() async {
   await ChatNotificationService.instance.init();
 
   AppBindings().dependencies();
-
+  await FirebaseSeed.seedAll();
   runApp(const MyApp(initialScreen: SplashRouter()));
 }

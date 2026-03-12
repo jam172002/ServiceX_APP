@@ -13,10 +13,13 @@ import '../../../../domain/models/booking_model.dart';
 import '../../../../domain/models/fixer_model.dart';
 import '../../../../domain/models/service_subcategory.dart';
 import '../../../../domain/repos/booking_repository.dart';
+import '../../../../domain/repos/service_catalog_repo.dart';
 import '../../../controllers/location_controller.dart';
 
 class CreateBookingController extends GetxController {
   // ── Dependencies ──────────────────────────────────────────────
+  final ServiceCatalogRepo _catalogRepo =
+  ServiceCatalogRepo(FirebaseFirestore.instance);
   final BookingRepository _bookingRepo = BookingRepository();
   final LocationController locationController = Get.find<LocationController>();
 
@@ -203,6 +206,8 @@ class CreateBookingController extends GetxController {
         id: bookingId,
         clientId: clientId,
         fixerId: fixer.uid,
+        fixerName: fixer.fullName,
+        fixerImageUrl: fixer.profileImageUrl,
         categoryId: fixerCategoryId,
         categoryName: fixerCategoryName.value,
         subcategoryId: selectedSubcategory.value!.id,
