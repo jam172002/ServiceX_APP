@@ -1,158 +1,165 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:servicex_client_app/domain/enums/app_enums.dart';
 import 'package:servicex_client_app/domain/models/booking_model.dart';
-import 'package:servicex_client_app/presentation/widgets/booking_card_widget.dart';
+import 'package:servicex_client_app/presentation/screens/bookings/booking_detail_screen.dart';
+import 'package:servicex_client_app/presentation/widgets/request_screen_card.dart';
+import 'package:servicex_client_app/presentation/widgets/request_status_filter.dart';
 import 'package:servicex_client_app/utils/constants/colors.dart';
-import 'package:servicex_client_app/utils/helpers/helper_functions.dart';
 
-import '../../bookings/booking_detail_screen.dart';
 import 'controller/jobs_tab_controller.dart';
 
-class JobsTabScreen extends StatefulWidget {
+class JobsTabScreen extends StatelessWidget {
   const JobsTabScreen({super.key});
 
   @override
-  State<JobsTabScreen> createState() => _JobsTabScreenState();
+  Widget build(BuildContext context) {
+    final c = Get.put(JobsTabController());
+
+    return Column(
+      children: [
+        // ── Title ──────────────────────────────────────────────────
+        const Padding(
+          padding: EdgeInsets.fromLTRB(16, 16, 16, 12),
+          child: Align(
+            alignment: Alignment.center,
+            child: Text(
+              'My Bookings',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                color: XColors.black,
+              ),
+            ),
+          ),
+        ),
+
+        // ── Chip filter row ────────────────────────────────────────
+        Obx(() => RequestStatusFilter(
+          selectedStatus: c.selectedStatus.value,
+          onStatusSelected: c.setFilter,
+          statuses: JobsTabController.filterLabels,
+        )),
+
+        const SizedBox(height: 12),
+
+        // ── Content ───────────────────────────────────────────────
+        Expanded(
+          child: Obx(() {
+            if (c.isLoading.value) {
+              return const Center(child: CircularProgressIndicator());
+            }
+
+            if (c.error.value.isNotEmpty) {
+              return Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.error_outline,
+                        size: 48, color: Colors.red),
+                    const SizedBox(height: 12),
+                    Text(
+                      'Failed to load bookings',
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      c.error.value,
+                      style: Theme.of(context).textTheme.bodySmall,
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 16),
+                    ElevatedButton.icon(
+                      onPressed: () => c.refresh(),
+                      icon: const Icon(Icons.refresh),
+                      label: const Text('Retry'),
+                    ),
+                  ],
+                ),
+              );
+            }
+
+            final items = c.filteredBookings;
+
+            if (items.isEmpty) {
+              return SizedBox(
+                width: double.infinity,
+                child: Align(
+                  alignment: const Alignment(0, -0.5),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Image.asset(
+                        'assets/images/no-bookings.png',
+                        width: 260,
+                        fit: BoxFit.contain,
+                        errorBuilder: (_, __, ___) => Image.asset(
+                          'assets/images/No-data.png',
+                          width: 260,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      const Text(
+                        'No bookings here',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w400,
+                          color: XColors.grey,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            }
+
+            return RefreshIndicator(
+              onRefresh: () => c.refresh(),
+              child: ListView.builder(
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: EdgeInsets.zero,
+                itemCount: items.length + 1,
+                itemBuilder: (_, index) {
+                  if (index == items.length) {
+                    return const SizedBox(height: 80);
+                  }
+                  final b = items[index];
+                  return _BookingCard(
+                    booking: b,
+                    onTap: () => Get.to(() => BookingDetailScreen(booking: b)),
+                  );
+                },
+              ),
+            );
+          }),
+        ),
+      ],
+    );
+  }
 }
 
-class _JobsTabScreenState extends State<JobsTabScreen>
-    with SingleTickerProviderStateMixin {
-  late final JobsTabController _c;
-  late final TabController _tabController;
+class _BookingCard extends StatelessWidget {
+  final BookingModel booking;
+  final VoidCallback onTap;
 
-  final List<String> _tabs = [
-    'All',
-    'Pending',
-    'Accepted',
-    'In Progress',
-    'Completed',
-    'Cancelled',
-  ];
-
-  @override
-  void initState() {
-    super.initState();
-    _c = Get.put(JobsTabController());
-    _tabController = TabController(length: _tabs.length, vsync: this);
-  }
-
-  @override
-  void dispose() {
-    _tabController.dispose();
-    Get.delete<JobsTabController>();
-    super.dispose();
-  }
-
-  List<BookingModel> _filtered(List<BookingModel> all, int tabIndex) {
-    if (tabIndex == 0) return all;
-    final map = {
-      1: BookingStatus.pending,
-      2: BookingStatus.accepted,
-      3: BookingStatus.inProgress,
-      4: BookingStatus.completed,
-      5: BookingStatus.cancelled,
-    };
-    return all.where((b) => b.status == map[tabIndex]).toList();
-  }
+  const _BookingCard({required this.booking, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
-    final width = XHelperFunctions.screenWidth();
-
-    return Scaffold(
-      backgroundColor: Colors.white,
-      body: Column(
-        children: [
-          // ── Tab bar ─────────────────────────────────────────
-          Container(
-            color: Colors.white,
-            child: TabBar(
-              controller: _tabController,
-              isScrollable: true,
-              tabAlignment: TabAlignment.start,
-              labelColor: XColors.primary,
-              unselectedLabelColor: XColors.grey,
-              labelStyle: const TextStyle(
-                  fontSize: 12, fontWeight: FontWeight.w600),
-              unselectedLabelStyle: const TextStyle(
-                  fontSize: 12, fontWeight: FontWeight.w400),
-              indicatorColor: XColors.primary,
-              indicatorWeight: 2.5,
-              dividerColor: XColors.borderColor,
-              tabs: _tabs.map((t) => Tab(text: t)).toList(),
-            ),
-          ),
-
-          // ── Content ─────────────────────────────────────────
-          Expanded(
-            child: Obx(() {
-              if (_c.isLoading.value) {
-                return const Center(child: CircularProgressIndicator());
-              }
-
-              if (_c.error.value.isNotEmpty) {
-                return Center(
-                  child: Text(
-                    _c.error.value,
-                    style: const TextStyle(color: Colors.red),
-                  ),
-                );
-              }
-
-              return TabBarView(
-                controller: _tabController,
-                children: List.generate(_tabs.length, (tabIndex) {
-                  final items = _filtered(_c.bookings.toList(), tabIndex);
-
-                  if (items.isEmpty) {
-                    return _buildEmptyState(width);
-                  }
-
-                  return ListView.builder(
-                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
-                    itemCount: items.length,
-                    itemBuilder: (_, i) {
-                      final b = items[i];
-                      return BookingCard(
-                        booking: b,
-                        fixerName: b.fixerName,
-                        fixerImageUrl: b.fixerImageUrl,
-                        onTap: () => Get.to(
-                              () => BookingDetailScreen(booking: b),
-                        ),
-                      );
-                    },
-                  );
-                }),
-              );
-            }),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildEmptyState(double width) {
-    return Padding(
-      padding: const EdgeInsets.only(top: 80),
-      child: Column(
-        children: [
-          Image.asset(
-            'assets/images/no-bookings.png',
-            width: width * 0.65,
-          ),
-          const SizedBox(height: 12),
-          const Text(
-            'No bookings here',
-            style: TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w400,
-              color: XColors.grey,
-            ),
-          ),
-        ],
-      ),
+    final b = booking;
+    return RequestScreenCard(
+      category: b.categoryName,
+      title: b.subcategoryName,
+      description: b.details,
+      location: b.address,
+      status: JobsTabController.statusLabel(b.status),
+      jobType: b.fixerName.isNotEmpty ? b.fixerName : 'Direct Booking',
+      budget: JobsTabController.budgetLabel(b.budgetMin, b.budgetMax),
+      date: JobsTabController.dateLabel(b.scheduledAt),
+      time: JobsTabController.timeLabel(b.scheduledAt),
+      imageUrl: b.imageUrls.isNotEmpty ? b.imageUrls.first : null,
+      imageAsset: null,
+      additionalImages: b.imageUrls.length > 1 ? b.imageUrls.length - 1 : 0,
+      onTap: onTap,
     );
   }
 }
