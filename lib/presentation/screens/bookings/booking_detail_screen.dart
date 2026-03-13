@@ -4,11 +4,10 @@ import 'package:iconsax/iconsax.dart';
 import 'package:intl/intl.dart';
 import 'package:servicex_client_app/domain/enums/app_enums.dart';
 import 'package:servicex_client_app/domain/models/booking_model.dart';
-import 'package:servicex_client_app/presentation/screens/bookings/create_booking_screen.dart';
 import 'package:servicex_client_app/presentation/widgets/common_appbar.dart';
 import 'package:servicex_client_app/utils/constants/colors.dart';
 
-import '../home/bottom_tabs/controller/jobs_tab_controller.dart';
+import '../home/bottom_tabs/controller/booking_tab_controller.dart';
 
 class BookingDetailScreen extends StatelessWidget {
   final BookingModel booking;
@@ -17,7 +16,7 @@ class BookingDetailScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final c = Get.find<JobsTabController>();
+    final c = Get.find<BookingTabController>();
     final fixerName = booking.fixerName.isNotEmpty
         ? booking.fixerName
         : 'Unknown';
@@ -283,7 +282,7 @@ class _StatusBanner extends StatelessWidget {
 // ── Action Buttons ────────────────────────────────────────────────
 class _ActionButtons extends StatelessWidget {
   final BookingModel booking;
-  final JobsTabController c;
+  final BookingTabController c;
 
   const _ActionButtons({required this.booking, required this.c});
 

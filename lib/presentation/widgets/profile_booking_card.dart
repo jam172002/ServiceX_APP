@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:iconsax/iconsax.dart';
-import 'package:servicex_client_app/presentation/screens/service_requests/request_detail_screen.dart';
+import 'package:servicex_client_app/presentation/screens/service_requests/job_detail_screen.dart';
 import 'package:servicex_client_app/utils/constants/colors.dart';
 import 'package:servicex_client_app/utils/constants/images.dart';
 
@@ -76,7 +76,7 @@ class ProfileBookingCard extends StatelessWidget {
     final status = data['status'] as String? ?? '';
 
     return GestureDetector(
-      onTap: () => Get.to(() => RequestDetailScreen(
+      onTap: () => Get.to(() => JobDetailScreen(
         isRequestDetailScreen: false,
         jobId: data['jobId'] as String? ?? '',
       )),

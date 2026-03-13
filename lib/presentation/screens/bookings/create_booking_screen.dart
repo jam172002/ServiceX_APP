@@ -23,14 +23,6 @@ import 'package:servicex_client_app/presentation/screens/chat/single_chat_screen
 import 'package:servicex_client_app/presentation/screens/chat/controller/chat_controller.dart';
 import 'package:servicex_client_app/services/chat_notification_service.dart';
 
-/// Navigate here from a fixer profile or service-providers list:
-///
-/// ```dart
-/// Get.to(() => CreateBookingScreen(
-///   fixer: fixer,
-///   fixerCategoryName: widget.sub.name, // optional — auto-selects chip
-/// ));
-/// ```
 class CreateBookingScreen extends StatefulWidget {
   final FixerModel fixer;
 

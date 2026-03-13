@@ -6,10 +6,10 @@ import 'package:servicex_client_app/domain/enums/app_enums.dart';
 import 'package:servicex_client_app/domain/models/booking_model.dart';
 import 'package:servicex_client_app/domain/repos/booking_repository.dart';
 
-class JobsTabController extends GetxController {
+class BookingTabController extends GetxController {
   final BookingRepository _repo;
 
-  JobsTabController({BookingRepository? repo})
+  BookingTabController({BookingRepository? repo})
       : _repo = repo ?? BookingRepository();
 
   // ── State ──────────────────────────────────────────────────────────────────

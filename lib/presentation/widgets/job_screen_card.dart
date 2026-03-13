@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:iconsax/iconsax.dart';
 import 'package:servicex_client_app/utils/constants/colors.dart';
 
-class RequestScreenCard extends StatelessWidget {
+class JobScreenCard extends StatelessWidget {
   final String category;
   final String title;
   final String description;
@@ -20,7 +20,7 @@ class RequestScreenCard extends StatelessWidget {
 
   final VoidCallback onTap;
 
-  const RequestScreenCard({
+  const JobScreenCard({
     super.key,
     required this.category,
     required this.title,

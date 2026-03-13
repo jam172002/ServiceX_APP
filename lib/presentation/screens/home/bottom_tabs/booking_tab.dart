@@ -2,18 +2,18 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:servicex_client_app/domain/models/booking_model.dart';
 import 'package:servicex_client_app/presentation/screens/bookings/booking_detail_screen.dart';
-import 'package:servicex_client_app/presentation/widgets/request_screen_card.dart';
+import 'package:servicex_client_app/presentation/widgets/job_screen_card.dart';
 import 'package:servicex_client_app/presentation/widgets/request_status_filter.dart';
 import 'package:servicex_client_app/utils/constants/colors.dart';
 
-import 'controller/jobs_tab_controller.dart';
+import 'controller/booking_tab_controller.dart';
 
-class JobsTabScreen extends StatelessWidget {
-  const JobsTabScreen({super.key});
+class BookingTabScreen extends StatelessWidget {
+  const BookingTabScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final c = Get.put(JobsTabController());
+    final c = Get.put(BookingTabController());
 
     return Column(
       children: [
@@ -37,7 +37,7 @@ class JobsTabScreen extends StatelessWidget {
         Obx(() => RequestStatusFilter(
           selectedStatus: c.selectedStatus.value,
           onStatusSelected: c.setFilter,
-          statuses: JobsTabController.filterLabels,
+          statuses: BookingTabController.filterLabels,
         )),
 
         const SizedBox(height: 12),
@@ -146,16 +146,16 @@ class _BookingCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final b = booking;
-    return RequestScreenCard(
+    return JobScreenCard(
       category: b.categoryName,
       title: b.subcategoryName,
       description: b.details,
       location: b.address,
-      status: JobsTabController.statusLabel(b.status),
+      status: BookingTabController.statusLabel(b.status),
       jobType: b.fixerName.isNotEmpty ? b.fixerName : 'Direct Booking',
-      budget: JobsTabController.budgetLabel(b.budgetMin, b.budgetMax),
-      date: JobsTabController.dateLabel(b.scheduledAt),
-      time: JobsTabController.timeLabel(b.scheduledAt),
+      budget: BookingTabController.budgetLabel(b.budgetMin, b.budgetMax),
+      date: BookingTabController.dateLabel(b.scheduledAt),
+      time: BookingTabController.timeLabel(b.scheduledAt),
       imageUrl: b.imageUrls.isNotEmpty ? b.imageUrls.first : null,
       imageAsset: null,
       additionalImages: b.imageUrls.length > 1 ? b.imageUrls.length - 1 : 0,
