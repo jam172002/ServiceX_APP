@@ -11,6 +11,7 @@ import '../../../../domain/models/user_model.dart';
 import '../../../../domain/repos/auth_repository.dart';
 import '../../../../domain/repos/user_repository.dart';
 import '../../../../domain/repos/wallet_repository.dart';
+import '../../../../services/chat_notification_service.dart';
 import '../login_screen.dart';
 import '../../navigation/vipeep_navigation.dart';
 import '../../../widgets/simple_alert_dialog.dart';
@@ -45,6 +46,9 @@ class AuthController extends GetxController {
     if (firebaseUser != null) {
       await _persistSession(firebaseUser.uid);
       await loadCurrentUser();
+
+      // ✅ FIX: was `firebaseUser as String` — must be firebaseUser.uid
+      await ChatNotificationService.instance.saveTokenForClient(firebaseUser.uid);
 
       final u = currentUser.value;
       if (u != null) {
@@ -144,6 +148,9 @@ class AuthController extends GetxController {
         await _persistSession(uid);
         await loadCurrentUser();
 
+        // ✅ FIX: save FCM token on every fresh login
+        await ChatNotificationService.instance.saveTokenForClient(uid);
+
         final u = currentUser.value;
         if (u != null) {
           await _syncLocationFromProfile(u);
@@ -177,21 +184,7 @@ class AuthController extends GetxController {
     }
   }
 
-  // ─────────────────────────────────────────────────────────────────────────
-  // LOGOUT — FIXED
-  // Fixes applied:
-  //   1. Dialog result was never awaited properly when tapping outside
-  //      (barrierDismissible: true returns null, not false — handled now).
-  //   2. isLoading was set AFTER the await dialog, causing UI glitches if
-  //      the user tapped quickly.
-  //   3. currentUser was cleared AFTER navigation, causing reactive widgets
-  //      to briefly re-render stale data on the login screen.
-  //   4. LocationController.clearAll() was called inside the try block after
-  //      navigation, which could throw and swallow the nav call silently.
-  //   5. No fallback if Get.offAll throws (e.g. route not found).
-  // ─────────────────────────────────────────────────────────────────────────
   Future<void> logout() async {
-    // ── Step 1: Show confirmation dialog ────────────────────────────────────
     final confirm = await Get.dialog<bool>(
       AlertDialog(
         title: const Text("Logout"),
@@ -207,56 +200,36 @@ class AuthController extends GetxController {
           ),
         ],
       ),
-      // FIX 1: barrierDismissible: true means tapping outside returns null.
-      // Treat null the same as false — do not proceed.
       barrierDismissible: false,
     );
 
-    // FIX 1 (cont): guard against null (tap-outside) as well as explicit false
     if (confirm != true) return;
 
-    // ── Step 2: Show loading immediately ────────────────────────────────────
-    // FIX 2: set loading before any async work so the UI reacts instantly
     isLoading.value = true;
 
     try {
-      // ── Step 3: Sign out from Firebase ──────────────────────────────────
       try {
         await _authRepo.signOut();
       } catch (_) {
-        // Fallback: force Firebase sign-out even if repo fails
         await FirebaseAuth.instance.signOut();
       }
 
-      // ── Step 4: Clear local state BEFORE navigation ──────────────────────
-      // FIX 3: clear currentUser first so Obx widgets on the upcoming
-      // login screen don't receive stale user data during the transition.
       currentUser.value = null;
 
-      // ── Step 5: Clear storage ────────────────────────────────────────────
       await _clearSession();
 
-      // ── Step 6: Clear location controller safely ─────────────────────────
-      // FIX 4: moved BEFORE Get.offAll so any errors here don't silently
-      // swallow the navigation call.
       if (Get.isRegistered<LocationController>()) {
         try {
           await Get.find<LocationController>().clearAll();
-        } catch (_) {
-          // Non-fatal — continue with logout even if this fails
-        }
+        } catch (_) {}
       }
 
-      // ── Step 7: Navigate to login ────────────────────────────────────────
-      // FIX 5: use offAllNamed if you have named routes, or wrap in try/catch.
-      // offAll with a builder is the safest option here.
       Get.offAll(
             () => const VipeepLoginScreen(),
         transition: Transition.fadeIn,
         duration: const Duration(milliseconds: 300),
       );
     } catch (e) {
-      // ── If anything fails, reset loading and show error ──────────────────
       Get.snackbar(
         "Logout Failed",
         "Please try again.",
@@ -265,7 +238,6 @@ class AuthController extends GetxController {
         snackPosition: SnackPosition.BOTTOM,
       );
     } finally {
-      // FIX: always reset loading regardless of success or failure
       isLoading.value = false;
     }
   }

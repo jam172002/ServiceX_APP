@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -21,7 +22,11 @@ void main() async {
 
   // Init push notification service (permissions + local channel + FCM listeners)
   await ChatNotificationService.instance.init();
-
+// Save FCM token for already-logged-in user (app restart / token rotation)
+  final uid = FirebaseAuth.instance.currentUser?.uid;
+  if (uid != null) {
+    await ChatNotificationService.instance.saveTokenForClient(uid);
+  }
   AppBindings().dependencies();
   await FirebaseSeed.seedAll();
   runApp(const MyApp(initialScreen: SplashRouter()));

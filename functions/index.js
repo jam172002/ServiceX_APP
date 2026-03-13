@@ -55,9 +55,7 @@ exports.sendChatNotification = onRequest(async (req, res) => {
   }
 });
 
-// ── Firestore trigger (recommended) ───────────────────────────────────────
-// Fires automatically on the server whenever a new message is created.
-// No Flutter code needed — just deploy and it works.
+// ── Firestore trigger: new chat message ───────────────────────────────────
 
 exports.onNewChatMessage = onDocumentCreated(
   "conversations/{convId}/messages/{msgId}",
@@ -105,7 +103,159 @@ exports.onNewChatMessage = onDocumentCreated(
         },
       });
     } catch (err) {
-      console.error("FCM trigger error:", err);
+      console.error("FCM chat trigger error:", err);
     }
   }
 );
+
+// ── Firestore trigger: new job request ────────────────────────────────────
+// Fires when a new document is created in `job_requests`.
+// Finds all fixxers whose mainCategory matches the job's categoryId
+// AND whose subCategories list contains the job's subcategoryId.
+// Sends an FCM push notification to each matching fixxer.
+
+exports.onNewJobRequest = onDocumentCreated(
+  "job_requests/{jobId}",
+  async (event) => {
+    const job = event.data?.data();
+    if (!job) return;
+
+    const jobId     = event.params.jobId;
+    const categoryId    = job.categoryId    ?? "";
+    const subcategoryId = job.subcategoryId ?? "";
+    const categoryName    = job.categoryName    ?? "New Job";
+    const subcategoryName = job.subcategoryName ?? "";
+    const address   = job.address ?? "Unknown location";
+    const budgetMin = job.budgetMin ?? 0;
+    const budgetMax = job.budgetMax ?? 0;
+    const isOpenForAll  = job.isOpenForAll ?? true;
+    const providerId    = job.providerId   ?? null;
+
+    // ── Build notification body ──────────────────────────────────
+    const serviceLabel = subcategoryName || categoryName;
+    const notifTitle   = `New Job: ${serviceLabel}`;
+    const notifBody    = `\$${budgetMin}–\$${budgetMax} · ${address}`;
+
+    if (isOpenForAll) {
+      // ── Open job: notify ALL fixxers whose mainCategory matches
+      //    AND who have the subcategory in their subCategories list ──
+
+      let query = admin.firestore()
+        .collection("fixxers")
+        .where("mainCategory", "==", categoryId);
+
+      // Only filter by subcategory if one was specified on the job
+      if (subcategoryId) {
+        query = query.where("subCategories", "array-contains", subcategoryId);
+      }
+
+      const fixxersSnap = await query.get();
+
+      if (fixxersSnap.empty) {
+        console.log(`No matching fixxers for categoryId=${categoryId}`);
+        return;
+      }
+
+      // Collect all FCM tokens (fixxers store their token in `fcmToken` field)
+      const tokens = [];
+      fixxersSnap.forEach((doc) => {
+        const token = doc.data().fcmToken;
+        if (token && typeof token === "string" && token.trim().length > 0) {
+          tokens.push(token);
+        }
+      });
+
+      if (tokens.length === 0) {
+        console.log("Matching fixxers found but none have an FCM token.");
+        return;
+      }
+
+      // Send in batches of 500 (FCM multicast limit)
+      const chunks = chunkArray(tokens, 500);
+      for (const chunk of chunks) {
+        try {
+          const response = await admin.messaging().sendEachForMulticast({
+            tokens: chunk,
+            notification: { title: notifTitle, body: notifBody },
+            data: {
+              type:           "new_job",
+              jobId:          jobId,
+              categoryId:     categoryId,
+              subcategoryId:  subcategoryId,
+              categoryName:   categoryName,
+              subcategoryName: subcategoryName,
+              address:        address,
+              budgetMin:      String(budgetMin),
+              budgetMax:      String(budgetMax),
+            },
+            android: {
+              priority: "high",
+              notification: { channelId: "jobs_channel", sound: "default" },
+            },
+            apns: {
+              payload: { aps: { sound: "default", badge: 1 } },
+            },
+          });
+          console.log(
+            `Job notif batch sent: ${response.successCount} success, ` +
+            `${response.failureCount} failed`
+          );
+        } catch (err) {
+          console.error("FCM job multicast error:", err);
+        }
+      }
+
+    } else {
+      // ── Direct job: notify only the specific provider ────────────
+      if (!providerId) return;
+
+      const fixxerSnap = await admin.firestore()
+        .collection("fixxers")
+        .doc(providerId)
+        .get();
+
+      if (!fixxerSnap.exists) return;
+
+      const token = fixxerSnap.data().fcmToken;
+      if (!token) return;
+
+      try {
+        await admin.messaging().send({
+          token,
+          notification: { title: `Direct Job Request: ${serviceLabel}`, body: notifBody },
+          data: {
+            type:           "new_job",
+            jobId:          jobId,
+            categoryId:     categoryId,
+            subcategoryId:  subcategoryId,
+            categoryName:   categoryName,
+            subcategoryName: subcategoryName,
+            address:        address,
+            budgetMin:      String(budgetMin),
+            budgetMax:      String(budgetMax),
+          },
+          android: {
+            priority: "high",
+            notification: { channelId: "jobs_channel", sound: "default" },
+          },
+          apns: {
+            payload: { aps: { sound: "default", badge: 1 } },
+          },
+        });
+        console.log(`Direct job notification sent to providerId=${providerId}`);
+      } catch (err) {
+        console.error("FCM direct job error:", err);
+      }
+    }
+  }
+);
+
+// ── Helper ────────────────────────────────────────────────────────────────
+
+function chunkArray(arr, size) {
+  const chunks = [];
+  for (let i = 0; i < arr.length; i += size) {
+    chunks.push(arr.slice(i, i + size));
+  }
+  return chunks;
+}
