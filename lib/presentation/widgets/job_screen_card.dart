@@ -20,6 +20,9 @@ class JobScreenCard extends StatelessWidget {
 
   final VoidCallback onTap;
 
+  /// When provided, a "View Quotes" button appears in the top-right corner.
+  final VoidCallback? onQuotesTap;
+
   const JobScreenCard({
     super.key,
     required this.category,
@@ -35,22 +38,23 @@ class JobScreenCard extends StatelessWidget {
     required this.onTap,
     this.imageAsset,
     this.imageUrl,
+    this.onQuotesTap,
   });
 
   Color _statusColor(String s) {
     switch (s.toLowerCase()) {
       case 'new':
-      case 'newrequest':        return Colors.blue;
-      case 'pending':           return Colors.blueGrey;
+      case 'newrequest':   return Colors.blue;
+      case 'pending':      return Colors.blueGrey;
       case 'under review':
-      case 'underreview':       return Colors.orange;
-      case 'accepted':          return Colors.green;
+      case 'underreview':  return Colors.orange;
+      case 'accepted':     return Colors.green;
       case 'in progress':
       case 'inprogress':
-      case 'ongoing':           return Colors.purple;
-      case 'completed':         return Colors.teal;
-      case 'cancelled':         return Colors.red;
-      default:                  return Colors.grey;
+      case 'ongoing':      return Colors.purple;
+      case 'completed':    return Colors.teal;
+      case 'cancelled':    return Colors.red;
+      default:             return Colors.grey;
     }
   }
 
@@ -62,57 +66,39 @@ class JobScreenCard extends StatelessWidget {
     const w = 130.0;
     const h = 148.0;
 
+    Widget img;
     if (imageUrl != null && imageUrl!.isNotEmpty) {
-      return ClipRRect(
-        borderRadius: radius,
-        child: Image.network(
-          imageUrl!,
-          width: w,
-          height: h,
-          fit: BoxFit.cover,
-          errorBuilder: (_, __, ___) => _placeholder(w, h, radius),
-          loadingBuilder: (_, child, progress) => progress == null
-              ? child
-              : _placeholder(w, h, radius, loading: true),
-        ),
+      img = Image.network(
+        imageUrl!, width: w, height: h, fit: BoxFit.cover,
+        errorBuilder: (_, __, ___) => _placeholder(),
+        loadingBuilder: (_, child, progress) =>
+        progress == null ? child : _placeholder(loading: true),
       );
+    } else if (imageAsset != null && imageAsset!.isNotEmpty) {
+      img = Image.asset(
+        imageAsset!, width: w, height: h, fit: BoxFit.cover,
+        errorBuilder: (_, __, ___) => _placeholder(),
+      );
+    } else {
+      img = _placeholder();
     }
 
-    if (imageAsset != null && imageAsset!.isNotEmpty) {
-      return ClipRRect(
-        borderRadius: radius,
-        child: Image.asset(
-          imageAsset!,
-          width: w,
-          height: h,
-          fit: BoxFit.cover,
-          errorBuilder: (_, __, ___) => _placeholder(w, h, radius),
-        ),
-      );
-    }
-
-    return _placeholder(w, h, radius);
+    return ClipRRect(borderRadius: radius, child: img);
   }
 
-  Widget _placeholder(double w, double h, BorderRadius radius,
-      {bool loading = false}) {
-    return ClipRRect(
-      borderRadius: radius,
-      child: Container(
-        width: w,
-        height: h,
-        color: XColors.grey.withValues(alpha: 0.15),
-        child: loading
-            ? const Center(
-          child: SizedBox(
-            width: 24,
-            height: 24,
-            child: CircularProgressIndicator(strokeWidth: 2),
-          ),
-        )
-            : const Icon(Icons.image_not_supported_outlined,
-            color: Colors.grey, size: 32),
-      ),
+  Widget _placeholder({bool loading = false}) {
+    return Container(
+      width: 130, height: 148,
+      color: XColors.grey.withValues(alpha: 0.15),
+      child: loading
+          ? const Center(
+        child: SizedBox(
+          width: 24, height: 24,
+          child: CircularProgressIndicator(strokeWidth: 2),
+        ),
+      )
+          : const Icon(Icons.image_not_supported_outlined,
+          color: Colors.grey, size: 32),
     );
   }
 
@@ -132,14 +118,14 @@ class JobScreenCard extends StatelessWidget {
           ),
           child: Row(
             children: [
-              //? ── Left image ───────────────────────────────────────
+
+              // ── Left image ─────────────────────────────────────────
               Stack(
                 children: [
                   _buildImage(),
                   if (additionalImages > 0)
                     Positioned(
-                      top: 6,
-                      right: 6,
+                      top: 6, right: 6,
                       child: Container(
                         padding: const EdgeInsets.symmetric(
                             horizontal: 4, vertical: 2),
@@ -160,22 +146,55 @@ class JobScreenCard extends StatelessWidget {
                 ],
               ),
 
-              //? ── Right details ────────────────────────────────────
+              // ── Right details ──────────────────────────────────────
               Expanded(
                 child: Padding(
-                  padding: const EdgeInsets.fromLTRB(8, 12, 12, 12),
+                  // Reduced vertical padding from 12 → 10 to prevent overflow
+                  padding: const EdgeInsets.fromLTRB(8, 10, 10, 10),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Tags row
+
+                      // Top row: category + status tags | Quotes button
                       Row(
+                        crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
                           _Tag(label: category, color: XColors.primary),
                           const SizedBox(width: 4),
                           _Tag(label: status, color: statusColor),
+                          const Spacer(),
+                          if (onQuotesTap != null)
+                            GestureDetector(
+                              onTap: onQuotesTap,
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 7, vertical: 3),
+                                decoration: BoxDecoration(
+                                  color: XColors.primary,
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: const [
+                                    Icon(Iconsax.document_text,
+                                        size: 10, color: Colors.white),
+                                    SizedBox(width: 3),
+                                    Text(
+                                      'Quotes',
+                                      style: TextStyle(
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.w600,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
                         ],
                       ),
-                      const SizedBox(height: 6),
+                      // Reduced gap from 6 → 4
+                      const SizedBox(height: 4),
 
                       // Title
                       Text(
@@ -183,9 +202,7 @@ class JobScreenCard extends StatelessWidget {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.bold,
-                        ),
+                            fontSize: 15, fontWeight: FontWeight.bold),
                       ),
 
                       // Description
@@ -194,9 +211,7 @@ class JobScreenCard extends StatelessWidget {
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
-                          fontSize: 11,
-                          color: XColors.grey,
-                        ),
+                            fontSize: 11, color: XColors.grey),
                       ),
 
                       const Spacer(),
@@ -208,22 +223,15 @@ class JobScreenCard extends StatelessWidget {
                           Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(
-                                jobType,
-                                style: const TextStyle(
-                                  fontSize: 10,
-                                  color: XColors.primary,
-                                ),
-                              ),
+                              Text(jobType,
+                                  style: const TextStyle(
+                                      fontSize: 10, color: XColors.primary)),
                               const SizedBox(height: 1),
-                              Text(
-                                budget,
-                                style: const TextStyle(
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.green,
-                                ),
-                              ),
+                              Text(budget,
+                                  style: const TextStyle(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.green)),
                             ],
                           ),
                           Column(
@@ -290,10 +298,7 @@ class _Tag extends StatelessWidget {
       child: Text(
         label,
         style: TextStyle(
-          fontSize: 9,
-          color: color,
-          fontWeight: FontWeight.w600,
-        ),
+            fontSize: 9, color: color, fontWeight: FontWeight.w600),
       ),
     );
   }

@@ -226,6 +226,7 @@ class _FilterTile extends StatelessWidget {
 // ─────────────────────────────────────────────────────────────────────────────
 // Job card with quotes button
 // ─────────────────────────────────────────────────────────────────────────────
+// Replace _JobCard in job_tab.dart with this:
 
 class _JobCard extends StatelessWidget {
   final JobRequestModel job;
@@ -237,50 +238,21 @@ class _JobCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(children: [
-      JobScreenCard(
-        category:        job.categoryName,
-        title:           job.subcategoryName,
-        description:     job.details,
-        location:        job.address,
-        status:          JobController.statusLabel(job.status),
-        jobType:         job.isOpenForAll ? 'Open For All' : 'Private',
-        budget:          JobController.budgetLabel(job.budgetMin, job.budgetMax),
-        date:            JobController.dateLabel(job.scheduledAt),
-        time:            JobController.timeLabel(job.scheduledAt),
-        imageAsset:      null,
-        imageUrl:        job.imageUrls.isNotEmpty ? job.imageUrls.first : null,
-        additionalImages: job.imageUrls.length > 1 ? job.imageUrls.length - 1 : 0,
-        onTap:           onTap,
-      ),
-      // Quotes button below card
-      Padding(
-        padding: const EdgeInsets.fromLTRB(14, 0, 14, 4),
-        child: GestureDetector(
-          onTap: onQuotesTap,
-          child: Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(vertical: 9),
-            decoration: BoxDecoration(
-              color: XColors.primary.withValues(alpha: 0.08),
-              borderRadius: const BorderRadius.only(
-                bottomLeft: Radius.circular(8),
-                bottomRight: Radius.circular(8),
-              ),
-              border: Border.all(color: XColors.primary.withValues(alpha: 0.2)),
-            ),
-            child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-              const Icon(Iconsax.document_text, size: 15, color: XColors.primary),
-              const SizedBox(width: 6),
-              const Text('View Quotes',
-                  style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: XColors.primary)),
-            ]),
-          ),
-        ),
-      ),
-    ]);
+    return JobScreenCard(
+      category:         job.categoryName,
+      title:            job.subcategoryName,
+      description:      job.details,
+      location:         job.address,
+      status:           JobController.statusLabel(job.status),
+      jobType:          job.isOpenForAll ? 'Open For All' : 'Private',
+      budget:           JobController.budgetLabel(job.budgetMin, job.budgetMax),
+      date:             JobController.dateLabel(job.scheduledAt),
+      time:             JobController.timeLabel(job.scheduledAt),
+      imageAsset:       null,
+      imageUrl:         job.imageUrls.isNotEmpty ? job.imageUrls.first : null,
+      additionalImages: job.imageUrls.length > 1 ? job.imageUrls.length - 1 : 0,
+      onTap:            onTap,
+      onQuotesTap:      onQuotesTap,
+    );
   }
 }
